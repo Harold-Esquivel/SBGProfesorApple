@@ -1,4 +1,4 @@
-package com.example.sbg_profesores
+package com.sbg.profesores
 
 import io.flutter.embedding.android.FlutterActivity
 
