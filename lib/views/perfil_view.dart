@@ -13,8 +13,18 @@ class PerfilView extends StatelessWidget {
   }
 }
 
+TimeOfDay _normalizarMinutosCadaCinco(TimeOfDay time) {
+  final totalMinutes = time.hour * 60 + time.minute;
+  final normalizedTotal = ((totalMinutes / 5).round() * 5) % (24 * 60);
+  return TimeOfDay(
+    hour: normalizedTotal ~/ 60,
+    minute: normalizedTotal % 60,
+  );
+}
+
 Future<TimeOfDay?> mostrarPickerHoraIOS(BuildContext context, {TimeOfDay? inicial}) async {
-  TimeOfDay selected = inicial ?? TimeOfDay.now();
+  final initialTime = _normalizarMinutosCadaCinco(inicial ?? TimeOfDay.now());
+  TimeOfDay selected = initialTime;
 
   final result = await showModalBottomSheet<TimeOfDay>(
     context: context,
@@ -55,13 +65,14 @@ Future<TimeOfDay?> mostrarPickerHoraIOS(BuildContext context, {TimeOfDay? inicia
                 data: const CupertinoThemeData(brightness: Brightness.dark),
                 child: CupertinoDatePicker(
                   mode: CupertinoDatePickerMode.time,
+                  minuteInterval: 5,
                   use24hFormat: false, // se ve AM/PM
                   initialDateTime: DateTime(
                     2026,
                     1,
                     1,
-                    inicial?.hour ?? TimeOfDay.now().hour,
-                    inicial?.minute ?? TimeOfDay.now().minute,
+                    initialTime.hour,
+                    initialTime.minute,
                   ),
                   onDateTimeChanged: (dt) {
                     selected = TimeOfDay(hour: dt.hour, minute: dt.minute);

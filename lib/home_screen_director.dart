@@ -1,8 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:sbg_profesores/theme/app_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:sbg_profesores/firebase_options.dart';
+
+String _emailUsuarioDesdeCodigo(String codigo, String rol) {
+  final limpio = codigo.trim();
+  if (rol == "profesor") return "$limpio@sbgprofesor.com";
+  return "$limpio@sbgalumno.com";
+}
+
+String _rolLegible(String rol) {
+  if (rol == "profesor") return "Profesor";
+  return "Alumno";
+}
 
 
 class HomeDirector extends StatefulWidget {
@@ -1455,6 +1468,32 @@ class PerfilDirectorView extends StatelessWidget {
 
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepOrange,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      icon: const Icon(Icons.person_add_alt_1),
+                      label: const Text(
+                        "Crear profesor o alumno",
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const CrearUsuarioDirectorView(),
+                          ),
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
                         backgroundColor: kPrimary,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 13),
@@ -1537,6 +1576,309 @@ class PerfilDirectorView extends StatelessWidget {
         const SnackBar(content: Text("No se pudo abrir WhatsApp")),
       );
     }
+  }
+}
+
+class CrearUsuarioDirectorView extends StatefulWidget {
+  const CrearUsuarioDirectorView({super.key});
+
+  @override
+  State<CrearUsuarioDirectorView> createState() => _CrearUsuarioDirectorViewState();
+}
+
+class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
+  final _formKey = GlobalKey<FormState>();
+  final _nombreCtrl = TextEditingController();
+  final _codigoCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
+  final _telefonoCtrl = TextEditingController();
+  final _apoderadoCtrl = TextEditingController();
+
+  String _rol = "alumno";
+  bool _guardando = false;
+
+  @override
+  void dispose() {
+    _nombreCtrl.dispose();
+    _codigoCtrl.dispose();
+    _passwordCtrl.dispose();
+    _telefonoCtrl.dispose();
+    _apoderadoCtrl.dispose();
+    super.dispose();
+  }
+
+  String get _emailGenerado => _emailUsuarioDesdeCodigo(_codigoCtrl.text, _rol);
+
+  Future<void> _crearUsuario() async {
+    FocusScope.of(context).unfocus();
+
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _guardando = true);
+
+    final director = FirebaseAuth.instance.currentUser;
+    final codigo = _codigoCtrl.text.trim();
+    final nombre = _nombreCtrl.text.trim();
+    final password = _passwordCtrl.text.trim();
+    final telefono = _telefonoCtrl.text.trim();
+    final apoderado = _apoderadoCtrl.text.trim();
+    final email = _emailUsuarioDesdeCodigo(codigo, _rol);
+    final nombreAppSecundaria =
+        "director-create-${DateTime.now().microsecondsSinceEpoch}";
+
+    FirebaseApp? appSecundaria;
+
+    try {
+      appSecundaria = await Firebase.initializeApp(
+        name: nombreAppSecundaria,
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+
+      final authSecundario = FirebaseAuth.instanceFor(app: appSecundaria);
+      final cred = await authSecundario.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      await FirebaseFirestore.instance.collection("usuarios").doc(cred.user!.uid).set({
+        "uid": cred.user!.uid,
+        "nombre": nombre,
+        "codigo": codigo,
+        "email": email,
+        "telefono": telefono,
+        "contacto": telefono,
+        "apoderado": _rol == "alumno" ? apoderado : "",
+        "rol": _rol,
+        "estado": "activo",
+        "createdAt": Timestamp.now(),
+        "updatedAt": Timestamp.now(),
+        "createdBy": director?.uid ?? "",
+      });
+
+      await authSecundario.signOut();
+      await appSecundaria.delete();
+      appSecundaria = null;
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "${_rolLegible(_rol)} creado correctamente. Código: $codigo",
+          ),
+        ),
+      );
+
+      _formKey.currentState!.reset();
+      _nombreCtrl.clear();
+      _codigoCtrl.clear();
+      _passwordCtrl.clear();
+      _telefonoCtrl.clear();
+      _apoderadoCtrl.clear();
+      setState(() => _rol = "alumno");
+    } on FirebaseAuthException catch (e) {
+      String mensaje = "No se pudo crear el usuario.";
+
+      if (e.code == "email-already-in-use") {
+        mensaje = "Ese código ya está registrado.";
+      } else if (e.code == "weak-password") {
+        mensaje = "La contraseña debe tener al menos 6 caracteres.";
+      } else if (e.code == "invalid-email") {
+        mensaje = "El código generado no es válido.";
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(mensaje)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error al crear usuario: $e")),
+      );
+    } finally {
+      if (appSecundaria != null) {
+        await FirebaseAuth.instanceFor(app: appSecundaria).signOut();
+        await appSecundaria.delete();
+      }
+
+      if (mounted) {
+        setState(() => _guardando = false);
+      }
+    }
+  }
+
+  InputDecoration _inputDecoration(String hint, IconData icon) {
+    return InputDecoration(
+      hintText: hint,
+      prefixIcon: Icon(icon),
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide.none,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: kPrimary,
+      appBar: AppBar(
+        backgroundColor: kPrimary,
+        foregroundColor: Colors.white,
+        title: const Text("Crear usuario"),
+      ),
+      body: Container(
+        color: kPrimary,
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF7FF),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Form(
+                key: _formKey,
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    const SizedBox(height: 6),
+                    const Text(
+                      "Alta de profesor o alumno",
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      "Crea su cuenta, contraseña y datos principales para que luego pueda iniciar sesión con su código.",
+                      style: TextStyle(color: Colors.black54, height: 1.35),
+                    ),
+                    const SizedBox(height: 18),
+                    DropdownButtonFormField<String>(
+                      initialValue: _rol,
+                      decoration: _inputDecoration("Rol", Icons.badge_outlined),
+                      items: const [
+                        DropdownMenuItem(value: "alumno", child: Text("Alumno")),
+                        DropdownMenuItem(value: "profesor", child: Text("Profesor")),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() => _rol = value);
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                    TextFormField(
+                      controller: _nombreCtrl,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: _inputDecoration("Nombre completo", Icons.person),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return "Ingresa el nombre";
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                    TextFormField(
+                      controller: _codigoCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: _inputDecoration("Código de ingreso", Icons.numbers),
+                      onChanged: (_) => setState(() {}),
+                      validator: (value) {
+                        final limpio = value?.trim() ?? "";
+                        if (limpio.isEmpty) return "Ingresa el código";
+                        if (limpio.contains(" ")) return "El código no debe tener espacios";
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Text(
+                        "Correo interno generado: $_emailGenerado",
+                        style: const TextStyle(
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    TextFormField(
+                      controller: _passwordCtrl,
+                      obscureText: true,
+                      decoration: _inputDecoration("Contraseña", Icons.lock_outline),
+                      validator: (value) {
+                        final limpio = value?.trim() ?? "";
+                        if (limpio.isEmpty) return "Ingresa la contraseña";
+                        if (limpio.length < 6) return "Mínimo 6 caracteres";
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                    TextFormField(
+                      controller: _telefonoCtrl,
+                      keyboardType: TextInputType.phone,
+                      decoration: _inputDecoration("Teléfono", Icons.phone),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return "Ingresa el teléfono";
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                    TextFormField(
+                      controller: _apoderadoCtrl,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: _inputDecoration(
+                        _rol == "alumno" ? "Apoderado" : "Apoderado (opcional)",
+                        Icons.family_restroom,
+                      ),
+                      validator: (value) {
+                        if (_rol == "alumno" && (value == null || value.trim().isEmpty)) {
+                          return "Ingresa el apoderado";
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPrimary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: _guardando ? null : _crearUsuario,
+                      icon: _guardando
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.save),
+                      label: Text(_guardando ? "Creando..." : "Crear usuario"),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -2271,4 +2613,3 @@ class AppHeader extends StatelessWidget {
     );
   }
 }
-
