@@ -6,6 +6,7 @@ import 'package:sbg_profesores/views/perfil_view.dart'; // si tienes un PerfilAl
 import 'package:sbg_profesores/widgets/classcard.dart'; // tu ClaseCard
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:sbg_profesores/services/auth_navigation_service.dart';
 
 class HomeAlumno extends StatefulWidget {
   const HomeAlumno({super.key});
@@ -580,7 +581,8 @@ floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
   Widget _logoutTabItem() {
     return InkWell(
       borderRadius: BorderRadius.circular(30),
-      onTap: () async => FirebaseAuth.instance.signOut(),
+      onTap: () async =>
+          AuthNavigationService.signOutAndReturnToLogin(context),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,

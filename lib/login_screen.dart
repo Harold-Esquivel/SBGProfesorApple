@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:sbg_profesores/home_screen_profesor.dart';
-import 'package:sbg_profesores/home_screen_student.dart';
-import 'package:sbg_profesores/home_screen_director.dart';
+import 'package:sbg_profesores/auth_gate.dart';
 
 class LoginScreen extends StatefulWidget {
   final String role;
@@ -85,23 +83,10 @@ final user = FirebaseAuth.instance.currentUser;
 
 if (!mounted || user == null) return;
 
-final email = user.email ?? "";
-
-Widget destino;
-
-if (email.endsWith("@sbgalumno.com")) {
-  destino = const HomeAlumno();
-} else if (email.endsWith("@sbgprofesor.com")) {
-  destino = const HomeProfesor();
-} else if (email.endsWith("@sbgdirector.com")) {
-  destino = const HomeDirector();
-} else {
-  destino = const HomeAlumno(); // seguridad
-}
-
-Navigator.pushReplacement(
+Navigator.pushAndRemoveUntil(
   context,
-  MaterialPageRoute(builder: (_) => destino),
+  MaterialPageRoute(builder: (_) => const AuthGate()),
+  (route) => false,
 );
 
 } 

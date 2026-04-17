@@ -6,6 +6,7 @@ import 'package:sbg_profesores/widgets/classcard.dart';
 import 'package:sbg_profesores/theme/app_colors.dart';
 import 'package:sbg_profesores/widgets/animated_role_button.dart';
 import 'package:sbg_profesores/views/perfil_view.dart';
+import 'package:sbg_profesores/services/auth_navigation_service.dart';
 
 int _durToMin(String d) {
   switch (d) {
@@ -1548,7 +1549,7 @@ Widget _tabItem({
     borderRadius: BorderRadius.circular(30),
     onTap: () async {
       if (isLogout) {
-        await FirebaseAuth.instance.signOut();
+        await AuthNavigationService.signOutAndReturnToLogin(context);
         return;
       }
       setState(() => _currentIndex = index);
@@ -1591,7 +1592,7 @@ Widget _logoutTabItem() {
   return InkWell(
     borderRadius: BorderRadius.circular(30),
     onTap: () async {
-      await FirebaseAuth.instance.signOut();
+      await AuthNavigationService.signOutAndReturnToLogin(context);
     },
     child: Column(
       mainAxisSize: MainAxisSize.min,

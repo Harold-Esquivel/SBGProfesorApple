@@ -5,6 +5,7 @@ import 'package:sbg_profesores/theme/app_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:sbg_profesores/firebase_options.dart';
+import 'package:sbg_profesores/services/auth_navigation_service.dart';
 
 String _emailUsuarioDesdeCodigo(String codigo, String rol) {
   final limpio = codigo.trim();
@@ -143,8 +144,7 @@ class _HomeDirectorState extends State<HomeDirector> {
     return InkWell(
       borderRadius: BorderRadius.circular(30),
       onTap: () async {
-        await FirebaseAuth.instance.signOut();
-        if (mounted) Navigator.pop(context);
+        await AuthNavigationService.signOutAndReturnToLogin(context);
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
