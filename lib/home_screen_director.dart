@@ -27,7 +27,7 @@ class HomeDirector extends StatefulWidget {
 }
 
 class _HomeDirectorState extends State<HomeDirector> {
-  int _currentIndex = 0;
+  int _currentIndex = 3;
 
   // ---- Título dinámico para el header ----
   String _tituloActual() {
