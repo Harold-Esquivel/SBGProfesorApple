@@ -941,19 +941,27 @@ class PagosAlumnoView extends StatelessWidget {
                     Expanded(
                       child: StreamBuilder<QuerySnapshot>(
                         stream: FirebaseFirestore.instance
-                        .collection("pagos")
-                        .snapshots(),
+                            .collection("pagos")
+                            .where("alumnoId", isEqualTo: alumnoId)
+                            .snapshots(),
                         builder: (context, snapshot) {
+                          if (snapshot.hasError) {
+                            return Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Text(
+                                  "Error: ${snapshot.error}",
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            );
+                          }
+
                           if (!snapshot.hasData) {
                             return const Center(child: CircularProgressIndicator());
                           }
                           final docs = snapshot.data!.docs;
-                          print("PAGOS TOTALES: ${docs.length}");
-                          if (docs.isNotEmpty) {
-                            final d0 = docs.first.data() as Map<String, dynamic>;
-                            print("PRIMER PAGO alumnoId: ${d0["alumnoId"]}");
-                            print("UID LOGUEADO: $alumnoId");
-                          }
                           final List<QueryDocumentSnapshot> deudas = [];
                           final List<QueryDocumentSnapshot> atrasadas = [];
                           final List<QueryDocumentSnapshot> pagadas = [];
