@@ -33,7 +33,7 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
 
     final random = Random();
-    _splashDuration = Duration(seconds: 5 + random.nextInt(6));
+    _splashDuration = Duration(seconds: 5 + random.nextInt(2));
     _loadingMessage =
         _loadingMessages[random.nextInt(_loadingMessages.length)];
 
@@ -54,7 +54,7 @@ class _SplashScreenState extends State<SplashScreen>
     ).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0, 0.5, curve: Curves.easeOut),
+        curve: const Interval(0, 0.25, curve: Curves.easeOutCubic),
       ),
     );
 
@@ -65,7 +65,7 @@ class _SplashScreenState extends State<SplashScreen>
     ).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.5, 0.75, curve: Curves.easeIn),
+        curve: const Interval(0.2, 0.4, curve: Curves.easeIn),
       ),
     );
 
@@ -84,7 +84,6 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   void _startAnimation() async {
-    await Future.delayed(const Duration(milliseconds: 500));
     _controller.forward();
 
     await Future.delayed(_splashDuration);
