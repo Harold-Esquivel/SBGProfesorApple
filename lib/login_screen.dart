@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sbg_profesores/auth_gate.dart';
+import 'package:sbg_profesores/theme/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
   final String role;
@@ -174,27 +175,37 @@ catch (e) {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 71, 76, 223),
+      backgroundColor: context.appPrimaryBackground,
       body: Center(
         child: SingleChildScrollView(
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 20),
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.appCard,
               borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: context.appBorder),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Asegúrate de que esta imagen exista en tus assets
-                Image.asset(
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Image.asset(
                   'assets/images/logo.png',
-                  height: 120,
+                    height: 120,
+                    width: 120,
+                    fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     // Si no encuentra la imagen, muestra un ícono para que no truene
-                    return const Icon(Icons.school, size: 80, color: Colors.blue);
+                      return const Icon(
+                        Icons.school,
+                        size: 80,
+                        color: Colors.blue,
+                      );
                   },
+                  ),
                 ),
                 const SizedBox(height: 24),
 

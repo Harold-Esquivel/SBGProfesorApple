@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:sbg_profesores/theme/app_theme.dart';
+import 'package:sbg_profesores/widgets/liquid_glass_bottom_nav.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:sbg_profesores/theme/app_colors.dart';
@@ -18,7 +20,6 @@ String _rolLegible(String rol) {
   return "Alumno";
 }
 
-
 class HomeDirector extends StatefulWidget {
   const HomeDirector({super.key});
 
@@ -29,7 +30,7 @@ class HomeDirector extends StatefulWidget {
 class _HomeDirectorState extends State<HomeDirector> {
   int _currentIndex = 3;
 
-  // ---- Título dinámico para el header ----
+  // ---- TÃ­tulo dinÃ¡mico para el header ----
   String _tituloActual() {
     switch (_currentIndex) {
       case 0:
@@ -45,122 +46,60 @@ class _HomeDirectorState extends State<HomeDirector> {
     }
   }
 
-  // ---- Páginas ----
   List<Widget> _paginas() {
-  final user = FirebaseAuth.instance.currentUser;
+    final user = FirebaseAuth.instance.currentUser;
 
-  return [
-    const InformesDirectorSectionView(),
-    const EstadisticasDirectorView(),
-    const PagosDirectorSectionView(),
-    PerfilDirectorView(directorId: user!.uid),
-  ];
-}
+    return [
+      const InformesDirectorSectionView(),
+      const EstadisticasDirectorView(),
+      const PagosDirectorSectionView(),
+      PerfilDirectorView(directorId: user!.uid),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
     final paginas = _paginas();
 
     return Scaffold(
-      backgroundColor: kPrimary,
+      extendBody: true,
+      backgroundColor: context.appPrimaryBackground,
       body: Column(
         children: [
-          // ✅ Header como tu profesor (si ya tienes AppHeader, úsalo)
+          // âœ… Header como tu profesor (si ya tienes AppHeader, Ãºsalo)
           AppHeader(titulo: _tituloActual()),
 
-          Expanded(
-            child: paginas[_currentIndex],
-          ),
+          Expanded(child: paginas[_currentIndex]),
         ],
       ),
 
-      bottomNavigationBar: BottomAppBar(
-        color: kPrimary,
-        child: SafeArea(
-          top: false,
-          child: SizedBox(
-            height: 60,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _tabItem(icon: Icons.description_outlined, label: "Informes", index: 0),
-                _tabItem(icon: Icons.bar_chart, label: "Estadísticas", index: 1),
-                _tabItem(icon: Icons.payments_outlined, label: "Pagos", index: 2),
-                _tabItem(icon: Icons.person_outline, label: "Perfil", index: 3),
-                _logoutTabItem(),
-              ],
-            ),
+      bottomNavigationBar: LiquidGlassBottomNav(
+        currentIndex: _currentIndex,
+        destinations: const [
+          LiquidGlassNavDestination(
+            icon: Icons.description_outlined,
+            label: "Informes",
+            index: 0,
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _tabItem({
-    required IconData icon,
-    required String label,
-    required int index,
-  }) {
-    final selected = _currentIndex == index;
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(30),
-      onTap: () => setState(() => _currentIndex = index),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              height: 1.0,
-              color: Colors.white,
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
-            ),
+          LiquidGlassNavDestination(
+            icon: Icons.bar_chart,
+            label: "Estadísticas",
+            index: 1,
           ),
-          const SizedBox(height: 4),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            height: 38,
-            width: 38,
-            decoration: BoxDecoration(
-              color: selected ? Colors.white : Colors.transparent,
-              shape: BoxShape.circle,
-            ),
-            alignment: Alignment.center,
-            child: Icon(
-              icon,
-              color: selected ? kPrimary : Colors.white,
-              size: 20,
-            ),
+          LiquidGlassNavDestination(
+            icon: Icons.payments_outlined,
+            label: "Pagos",
+            index: 2,
+          ),
+          LiquidGlassNavDestination(
+            icon: Icons.person_outline,
+            label: "Perfil",
+            index: 3,
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _logoutTabItem() {
-    return InkWell(
-      borderRadius: BorderRadius.circular(30),
-      onTap: () async {
-        await AuthNavigationService.signOutAndReturnToLogin(context);
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Text(
-            "Salir",
-            style: TextStyle(
-              fontSize: 10,
-              height: 1.0,
-              color: Colors.white,
-            ),
-          ),
-          SizedBox(height: 4),
-          Icon(Icons.logout, color: Colors.white, size: 20),
-        ],
+        onDestinationSelected: (index) => setState(() => _currentIndex = index),
+        onLogoutPressed: () =>
+            AuthNavigationService.signOutAndReturnToLogin(context),
       ),
     );
   }
@@ -201,7 +140,7 @@ class ListaInformesAlumnoDirectorView extends StatelessWidget {
     final uri = Uri.tryParse(url);
     if (uri == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("La URL del informe es inválida")),
+        const SnackBar(content: Text("La URL del informe es invÃ¡lida")),
       );
       return;
     }
@@ -217,21 +156,21 @@ class ListaInformesAlumnoDirectorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kPrimary,
+      backgroundColor: context.appPrimaryBackground,
       appBar: AppBar(
         backgroundColor: kPrimary,
         foregroundColor: Colors.white,
         title: Text("Informes de $alumnoNombre"),
       ),
       body: Container(
-        color: kPrimary,
+        color: context.appPrimaryBackground,
         child: SafeArea(
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF7FF),
+                color: context.appPanel,
                 borderRadius: BorderRadius.circular(18),
               ),
               child: StreamBuilder<QuerySnapshot>(
@@ -257,10 +196,10 @@ class ListaInformesAlumnoDirectorView extends StatelessWidget {
                   final informes = snapshot.data!.docs;
 
                   if (informes.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Text(
                         "Este alumno no tiene informes",
-                        style: TextStyle(color: Colors.black54),
+                        style: TextStyle(color: context.appMutedText),
                       ),
                     );
                   }
@@ -284,11 +223,9 @@ class ListaInformesAlumnoDirectorView extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: context.appCard,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.black.withOpacity(0.06),
-                            ),
+                            border: Border.all(color: context.appBorder),
                           ),
                           child: Row(
                             children: [
@@ -299,7 +236,10 @@ class ListaInformesAlumnoDirectorView extends StatelessWidget {
                                   color: kPrimary.withOpacity(0.12),
                                   borderRadius: BorderRadius.circular(14),
                                 ),
-                                child: const Icon(Icons.picture_as_pdf, color: kPrimary),
+                                child: const Icon(
+                                  Icons.picture_as_pdf,
+                                  color: kPrimary,
+                                ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -315,14 +255,19 @@ class ListaInformesAlumnoDirectorView extends StatelessWidget {
                                     const SizedBox(height: 4),
                                     Text(
                                       fecha == null
-                                          ? "Fecha: —"
+                                          ? "Fecha: â€”"
                                           : "Fecha: ${fecha.day.toString().padLeft(2, "0")}/${fecha.month.toString().padLeft(2, "0")}/${fecha.year}",
-                                      style: const TextStyle(color: Colors.black54),
+                                      style: TextStyle(
+                                        color: context.appMutedText,
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
-                              const Icon(Icons.open_in_new, color: Colors.black54),
+                              Icon(
+                                Icons.open_in_new,
+                                color: context.appMutedText,
+                              ),
                             ],
                           ),
                         ),
@@ -356,7 +301,7 @@ class _CrearInformeAlumnoViewState extends State<CrearInformeAlumnoView> {
 
     if (titulo.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Escribe el título del informe")),
+        const SnackBar(content: Text("Escribe el tÃ­tulo del informe")),
       );
       return;
     }
@@ -383,9 +328,9 @@ class _CrearInformeAlumnoViewState extends State<CrearInformeAlumnoView> {
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Informe enviado ✅")),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text("Informe enviado âœ…")));
 
     Navigator.pop(context);
   }
@@ -393,21 +338,21 @@ class _CrearInformeAlumnoViewState extends State<CrearInformeAlumnoView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kPrimary,
+      backgroundColor: context.appPrimaryBackground,
       appBar: AppBar(
         backgroundColor: kPrimary,
         foregroundColor: Colors.white,
         title: const Text("Nuevo informe"),
       ),
       body: Container(
-        color: kPrimary,
+        color: context.appPrimaryBackground,
         child: SafeArea(
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF7FF),
+                color: context.appPanel,
                 borderRadius: BorderRadius.circular(18),
               ),
               child: ListView(
@@ -421,8 +366,8 @@ class _CrearInformeAlumnoViewState extends State<CrearInformeAlumnoView> {
                   const SizedBox(height: 6),
                   Text(
                     "Alumno: ${widget.alumnoNombre}",
-                    style: const TextStyle(
-                      color: Colors.black54,
+                    style: TextStyle(
+                      color: context.appMutedText,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -431,10 +376,10 @@ class _CrearInformeAlumnoViewState extends State<CrearInformeAlumnoView> {
                   TextField(
                     controller: tituloCtrl,
                     decoration: InputDecoration(
-                      hintText: "Título",
+                      hintText: "TÃ­tulo",
                       prefixIcon: const Icon(Icons.title),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: context.appInputFill,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide.none,
@@ -450,7 +395,7 @@ class _CrearInformeAlumnoViewState extends State<CrearInformeAlumnoView> {
                       hintText: "URL del informe (PDF)",
                       prefixIcon: const Icon(Icons.link),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: context.appInputFill,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide.none,
@@ -504,10 +449,7 @@ enum InformeModo { crear, ver }
 class SeleccionarAlumnoInformeView extends StatefulWidget {
   final InformeModo modo;
 
-  const SeleccionarAlumnoInformeView({
-    super.key,
-    required this.modo,
-  });
+  const SeleccionarAlumnoInformeView({super.key, required this.modo});
 
   @override
   State<SeleccionarAlumnoInformeView> createState() =>
@@ -523,21 +465,21 @@ class _SeleccionarAlumnoInformeViewState
     final esCrear = widget.modo == InformeModo.crear;
 
     return Scaffold(
-      backgroundColor: kPrimary,
+      backgroundColor: context.appPrimaryBackground,
       appBar: AppBar(
         backgroundColor: kPrimary,
         foregroundColor: Colors.white,
         title: Text(esCrear ? "Elige a un estudiante" : "Elige a un alumno"),
       ),
       body: Container(
-        color: kPrimary,
+        color: context.appPrimaryBackground,
         child: SafeArea(
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF7FF),
+                color: context.appPanel,
                 borderRadius: BorderRadius.circular(18),
               ),
               child: Column(
@@ -545,12 +487,13 @@ class _SeleccionarAlumnoInformeViewState
                   Padding(
                     padding: const EdgeInsets.all(14),
                     child: TextField(
-                      onChanged: (v) => setState(() => filtro = v.trim().toLowerCase()),
+                      onChanged: (v) =>
+                          setState(() => filtro = v.trim().toLowerCase()),
                       decoration: InputDecoration(
                         hintText: "Buscar alumno...",
                         prefixIcon: const Icon(Icons.search),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: context.appInputFill,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                           borderSide: BorderSide.none,
@@ -567,7 +510,9 @@ class _SeleccionarAlumnoInformeViewState
                           .snapshots(),
                       builder: (context, snapshot) {
                         if (!snapshot.hasData) {
-                          return const Center(child: CircularProgressIndicator());
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
                         }
 
                         final alumnos = snapshot.data!.docs.where((doc) {
@@ -580,18 +525,20 @@ class _SeleccionarAlumnoInformeViewState
 
                         if (alumnos.isEmpty) {
                           return const Center(
-                            child: Text("No se encontró ningún alumno"),
+                            child: Text("No se encontrÃ³ ningÃºn alumno"),
                           );
                         }
 
                         return ListView.separated(
                           padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
                           itemCount: alumnos.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 10),
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 10),
                           itemBuilder: (context, i) {
                             final alumno = alumnos[i];
                             final alumnoId = alumno.id;
-                            final nombre = (alumno["nombre"] ?? "Alumno").toString();
+                            final nombre = (alumno["nombre"] ?? "Alumno")
+                                .toString();
 
                             return InkWell(
                               borderRadius: BorderRadius.circular(16),
@@ -610,10 +557,11 @@ class _SeleccionarAlumnoInformeViewState
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => ListaInformesAlumnoDirectorView(
-                                        alumnoId: alumnoId,
-                                        alumnoNombre: nombre,
-                                      ),
+                                      builder: (_) =>
+                                          ListaInformesAlumnoDirectorView(
+                                            alumnoId: alumnoId,
+                                            alumnoNombre: nombre,
+                                          ),
                                     ),
                                   );
                                 }
@@ -621,15 +569,18 @@ class _SeleccionarAlumnoInformeViewState
                               child: Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: context.appCard,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: Colors.black.withOpacity(0.06),
+                                    color: context.appBorder,
                                   ),
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.person, color: Colors.black54),
+                                    Icon(
+                                      Icons.person,
+                                      color: context.appMutedText,
+                                    ),
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: Text(
@@ -639,7 +590,10 @@ class _SeleccionarAlumnoInformeViewState
                                         ),
                                       ),
                                     ),
-                                    const Icon(Icons.chevron_right, color: Colors.black54),
+                                    Icon(
+                                      Icons.chevron_right,
+                                      color: context.appMutedText,
+                                    ),
                                   ],
                                 ),
                               ),
@@ -665,14 +619,14 @@ class InformesDirectorSectionView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: kPrimary,
+      color: context.appPrimaryBackground,
       child: SafeArea(
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF7FF),
+              color: context.appPanel,
               borderRadius: BorderRadius.circular(18),
             ),
             child: ListView(
@@ -692,7 +646,7 @@ class InformesDirectorSectionView extends StatelessWidget {
 
                 _DirectorActionCard(
                   titulo: "Crear informes",
-                  subtitulo: "Selecciona un alumno y envíale un nuevo informe",
+                  subtitulo: "Selecciona un alumno y enviale un nuevo informe",
                   icono: Icons.add_box_rounded,
                   onTap: () {
                     Navigator.push(
@@ -710,7 +664,8 @@ class InformesDirectorSectionView extends StatelessWidget {
 
                 _DirectorActionCard(
                   titulo: "Ver informes",
-                  subtitulo: "Selecciona un alumno y revisa sus informes anteriores",
+                  subtitulo:
+                      "Selecciona un alumno y revisa sus informes anteriores",
                   icono: Icons.description_rounded,
                   onTap: () {
                     Navigator.push(
@@ -731,8 +686,6 @@ class InformesDirectorSectionView extends StatelessWidget {
     );
   }
 }
-
-
 
 class _DirectorActionCard extends StatelessWidget {
   final String titulo;
@@ -755,12 +708,12 @@ class _DirectorActionCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.appCard,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.black.withOpacity(0.06)),
+          border: Border.all(color: context.appBorder),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: context.appShadow,
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
@@ -790,14 +743,11 @@ class _DirectorActionCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    subtitulo,
-                    style: const TextStyle(color: Colors.black54),
-                  ),
+                  Text(subtitulo, style: TextStyle(color: context.appMutedText)),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Colors.black54),
+            Icon(Icons.chevron_right, color: context.appMutedText),
           ],
         ),
       ),
@@ -811,18 +761,20 @@ class EstadisticasDirectorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: kPrimary,
+      color: context.appPrimaryBackground,
       child: SafeArea(
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF7FF),
+              color: context.appPanel,
               borderRadius: BorderRadius.circular(18),
             ),
             child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection("clases").snapshots(),
+              stream: FirebaseFirestore.instance
+                  .collection("clases")
+                  .snapshots(),
               builder: (context, snap) {
                 if (!snap.hasData) {
                   return const Center(child: CircularProgressIndicator());
@@ -846,19 +798,27 @@ class EstadisticasDirectorView extends StatelessWidget {
                   children: [
                     const SizedBox(height: 6),
 
+                    const SizedBox(height: 12),
+
                     const Text(
                       "Resumen general",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     const Text(
                       "Estadísticas generales de toda la institución.",
-                      style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
 
                     const SizedBox(height: 16),
 
-                    // ✅ 2 cuadros grandes
+                    // âœ… 2 cuadros grandes
                     _BigStatCard(
                       titulo: "Clases hechas (total)",
                       valor: "$hechas",
@@ -881,7 +841,7 @@ class EstadisticasDirectorView extends StatelessWidget {
 
                     const SizedBox(height: 20),
 
-                    // ✅ Texto + botón
+                    // âœ… Texto + botÃ³n
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
@@ -902,7 +862,9 @@ class EstadisticasDirectorView extends StatelessWidget {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: kPrimary,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
                                 ),
@@ -912,7 +874,9 @@ class EstadisticasDirectorView extends StatelessWidget {
                               onPressed: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (_) => const ListaProfesoresView()),
+                                  MaterialPageRoute(
+                                    builder: (_) => const ListaProfesoresView(),
+                                  ),
                                 );
                               },
                             ),
@@ -930,8 +894,6 @@ class EstadisticasDirectorView extends StatelessWidget {
     );
   }
 }
-
-
 
 class _BigStatCard extends StatelessWidget {
   final String titulo;
@@ -952,10 +914,14 @@ class _BigStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cardColor = context.isDarkMode
+        ? Color.alphaBlend(border.withOpacity(0.18), context.appCard)
+        : bg;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: bg,
+        color: cardColor,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: border, width: 1.6),
       ),
@@ -965,7 +931,7 @@ class _BigStatCard extends StatelessWidget {
             height: 46,
             width: 46,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.appCard,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(icono, color: iconColor),
@@ -975,11 +941,17 @@ class _BigStatCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(titulo, style: const TextStyle(fontWeight: FontWeight.w900)),
+                Text(
+                  titulo,
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
                 const SizedBox(height: 6),
                 Text(
                   valor,
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ],
             ),
@@ -1013,7 +985,7 @@ class ListaProfesoresView extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF7FF),
+                color: context.appPanel,
                 borderRadius: BorderRadius.circular(18),
               ),
               child: StreamBuilder<QuerySnapshot>(
@@ -1023,10 +995,12 @@ class ListaProfesoresView extends StatelessWidget {
                     .orderBy("nombre")
                     .snapshots(),
                 builder: (context, snap) {
-                  if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+                  if (!snap.hasData)
+                    return const Center(child: CircularProgressIndicator());
 
                   final profes = snap.data!.docs;
-                  if (profes.isEmpty) return const Center(child: Text("No hay profesores"));
+                  if (profes.isEmpty)
+                    return const Center(child: Text("No hay profesores"));
 
                   return ListView.separated(
                     padding: const EdgeInsets.all(14),
@@ -1053,21 +1027,26 @@ class ListaProfesoresView extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: context.appCard,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.black.withOpacity(0.06)),
+                            border: Border.all(color: context.appBorder),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.person, color: Colors.black54),
+                              Icon(Icons.person, color: context.appMutedText),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
                                   nombre,
-                                  style: const TextStyle(fontWeight: FontWeight.w900),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                  ),
                                 ),
                               ),
-                              const Icon(Icons.chevron_right, color: Colors.black54),
+                              Icon(
+                                Icons.chevron_right,
+                                color: context.appMutedText,
+                              ),
                             ],
                           ),
                         ),
@@ -1084,9 +1063,6 @@ class ListaProfesoresView extends StatelessWidget {
   }
 }
 
-/// ------------------------------------
-/// 3) ESTADÍSTICAS POR PROFESOR (DETALLE)
-/// ------------------------------------
 class EstadisticasProfesorView extends StatelessWidget {
   final String profesorId;
   final String profesorNombre;
@@ -1114,7 +1090,7 @@ class EstadisticasProfesorView extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF7FF),
+                color: context.appPanel,
                 borderRadius: BorderRadius.circular(18),
               ),
               child: StreamBuilder<QuerySnapshot>(
@@ -1123,7 +1099,8 @@ class EstadisticasProfesorView extends StatelessWidget {
                     .where("profesorId", isEqualTo: profesorId)
                     .snapshots(),
                 builder: (context, snap) {
-                  if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+                  if (!snap.hasData)
+                    return const Center(child: CircularProgressIndicator());
 
                   final clases = snap.data!.docs;
 
@@ -1135,7 +1112,8 @@ class EstadisticasProfesorView extends StatelessWidget {
                   for (final c in clases) {
                     final d = c.data() as Map<String, dynamic>;
                     final estado = (d["estado"] ?? "activa").toString();
-                    final tipo = (d["tipoClase"] ?? d["tipo"] ?? "presencial").toString();
+                    final tipo = (d["tipoClase"] ?? d["tipo"] ?? "presencial")
+                        .toString();
 
                     if (estado == "hecha") hechas++;
                     if (estado == "cancelada") canceladas++;
@@ -1148,13 +1126,13 @@ class EstadisticasProfesorView extends StatelessWidget {
                     children: [
                       const SizedBox(height: 6),
 
-                      // ✅ INFO PROFESOR
+                      // âœ… INFO PROFESOR
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.appCard,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.black.withOpacity(0.06)),
+                          border: Border.all(color: context.appBorder),
                         ),
                         child: Row(
                           children: [
@@ -1173,13 +1151,18 @@ class EstadisticasProfesorView extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Text(
-                                    "Información del profesor",
-                                    style: TextStyle(fontWeight: FontWeight.w900),
+                                    "InformaciÃ³n del profesor",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                    ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     profesorNombre,
-                                    style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w700),
+                                    style: TextStyle(
+                                      color: context.appText,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -1269,10 +1252,14 @@ class _SmallStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cardColor = context.isDarkMode
+        ? Color.alphaBlend(border.withOpacity(0.18), context.appCard)
+        : bg;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: bg,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: border, width: 1.5),
       ),
@@ -1288,7 +1275,10 @@ class _SmallStatCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             titulo,
-            style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.w700),
+            style: TextStyle(
+              color: context.appMutedText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
@@ -1302,14 +1292,14 @@ class PagosDirectorSectionView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: kPrimary,
+      color: context.appPrimaryBackground,
       child: SafeArea(
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF7FF),
+              color: context.appPanel,
               borderRadius: BorderRadius.circular(18),
             ),
             child: Column(
@@ -1322,7 +1312,10 @@ class PagosDirectorSectionView extends StatelessWidget {
                 const SizedBox(height: 6),
                 const Text(
                   "Elige qué deseas hacer",
-                  style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 22),
 
@@ -1332,24 +1325,29 @@ class PagosDirectorSectionView extends StatelessWidget {
                     children: [
                       _BigActionCard(
                         title: "Crear nuevos pagos",
-                        subtitle: "Crea un pago y asígnalo a alumnos o a todos",
+                        subtitle: "Crea un pago y asignalo a alumnos o a todos",
                         icon: Icons.add_card,
                         onTap: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const CrearPagoDirectorView()),
+                            MaterialPageRoute(
+                              builder: (_) => const CrearPagoDirectorView(),
+                            ),
                           );
                         },
                       ),
                       const SizedBox(height: 12),
                       _BigActionCard(
                         title: "Ver pagos",
-                        subtitle: "Lista de alumnos → ver pagos pendientes/atrasados",
+                        subtitle:
+                            "Lista de alumnos â†’ ver pagos pendientes/atrasados",
                         icon: Icons.search,
                         onTap: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const ListaAlumnosPagosView()),
+                            MaterialPageRoute(
+                              builder: (_) => const ListaAlumnosPagosView(),
+                            ),
                           );
                         },
                       ),
@@ -1373,14 +1371,14 @@ class PerfilDirectorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: kPrimary,
+      color: context.appPrimaryBackground,
       child: SafeArea(
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF7FF),
+              color: context.appPanel,
               borderRadius: BorderRadius.circular(18),
             ),
             child: StreamBuilder<DocumentSnapshot>(
@@ -1393,15 +1391,17 @@ class PerfilDirectorView extends StatelessWidget {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                final data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
+                final data =
+                    snapshot.data!.data() as Map<String, dynamic>? ?? {};
                 final nombre = (data["nombre"] ?? "Director").toString();
-                final contacto = (data["contacto"] ?? "—").toString();
+                final contacto = (data["contacto"] ?? "â€”").toString();
 
                 return ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
                     const SizedBox(height: 6),
 
+                    const SizedBox(height: 12),
                     Text(
                       "Bienvenido, $nombre",
                       style: const TextStyle(
@@ -1409,10 +1409,11 @@ class PerfilDirectorView extends StatelessWidget {
                         fontWeight: FontWeight.w900,
                       ),
                     ),
+
                     const SizedBox(height: 6),
-                    const Text(
+                    Text(
                       "Perfil del director",
-                      style: TextStyle(color: Colors.black54),
+                      style: TextStyle(color: context.appMutedText),
                     ),
 
                     const SizedBox(height: 18),
@@ -1420,9 +1421,9 @@ class PerfilDirectorView extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.appCard,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.black.withOpacity(0.06)),
+                        border: Border.all(color: context.appBorder),
                       ),
                       child: Column(
                         children: [
@@ -1452,11 +1453,11 @@ class PerfilDirectorView extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.05),
+                        color: context.appSoftFill,
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: const Text(
-                        "Entraste como Modo Director, aquí podrás modificar, agregar o ver todo sobre los usuarios (alumnos y profesor). Además de eso, si tienes alguna duda, ves algún error o quieres que en la aplicación tenga una nueva actualización, puedes pedirla a nuestro contacto de soporte.",
+                        "Entraste como Modo Director, aqui puedes modificar, agregar o ver todo sobre los usuarios (alumnos y profesor). Además de eso, si tienes alguna duda, ves algúm error o quieres que en la aplicación tenga una nueva actualización, puedes pedirla a nuestro contacto de soporte.",
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           height: 1.4,
@@ -1508,6 +1509,11 @@ class PerfilDirectorView extends StatelessWidget {
                       ),
                       onPressed: () => _mostrarOpcionesSoporte(context),
                     ),
+                    const Align(
+                      alignment: Alignment.centerRight,
+                      child: ThemeToggleButton(),
+                    ),
+                    const SizedBox(height: 12),
                   ],
                 );
               },
@@ -1524,7 +1530,7 @@ class PerfilDirectorView extends StatelessWidget {
       builder: (_) {
         return AlertDialog(
           title: const Text("Soporte"),
-          content: const Text("Elige una opción de contacto."),
+          content: const Text("Elige una opciÃ³n de contacto."),
           actions: [
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
@@ -1583,7 +1589,8 @@ class CrearUsuarioDirectorView extends StatefulWidget {
   const CrearUsuarioDirectorView({super.key});
 
   @override
-  State<CrearUsuarioDirectorView> createState() => _CrearUsuarioDirectorViewState();
+  State<CrearUsuarioDirectorView> createState() =>
+      _CrearUsuarioDirectorViewState();
 }
 
 class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
@@ -1640,20 +1647,23 @@ class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
         password: password,
       );
 
-      await FirebaseFirestore.instance.collection("usuarios").doc(cred.user!.uid).set({
-        "uid": cred.user!.uid,
-        "nombre": nombre,
-        "codigo": codigo,
-        "email": email,
-        "telefono": telefono,
-        "contacto": telefono,
-        "apoderado": _rol == "alumno" ? apoderado : "",
-        "rol": _rol,
-        "estado": "activo",
-        "createdAt": Timestamp.now(),
-        "updatedAt": Timestamp.now(),
-        "createdBy": director?.uid ?? "",
-      });
+      await FirebaseFirestore.instance
+          .collection("usuarios")
+          .doc(cred.user!.uid)
+          .set({
+            "uid": cred.user!.uid,
+            "nombre": nombre,
+            "codigo": codigo,
+            "email": email,
+            "telefono": telefono,
+            "contacto": telefono,
+            "apoderado": _rol == "alumno" ? apoderado : "",
+            "rol": _rol,
+            "estado": "activo",
+            "createdAt": Timestamp.now(),
+            "updatedAt": Timestamp.now(),
+            "createdBy": director?.uid ?? "",
+          });
 
       await authSecundario.signOut();
       await appSecundaria.delete();
@@ -1664,7 +1674,7 @@ class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            "${_rolLegible(_rol)} creado correctamente. Código: $codigo",
+            "${_rolLegible(_rol)} creado correctamente. CÃ³digo: $codigo",
           ),
         ),
       );
@@ -1680,22 +1690,22 @@ class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
       String mensaje = "No se pudo crear el usuario.";
 
       if (e.code == "email-already-in-use") {
-        mensaje = "Ese código ya está registrado.";
+        mensaje = "Ese cÃ³digo ya estÃ¡ registrado.";
       } else if (e.code == "weak-password") {
-        mensaje = "La contraseña debe tener al menos 6 caracteres.";
+        mensaje = "La contraseÃ±a debe tener al menos 6 caracteres.";
       } else if (e.code == "invalid-email") {
-        mensaje = "El código generado no es válido.";
+        mensaje = "El cÃ³digo generado no es vÃ¡lido.";
       }
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(mensaje)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(mensaje)));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error al crear usuario: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error al crear usuario: $e")));
     } finally {
       if (appSecundaria != null) {
         await FirebaseAuth.instanceFor(app: appSecundaria).signOut();
@@ -1708,12 +1718,17 @@ class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
     }
   }
 
-  InputDecoration _inputDecoration(String hint, IconData icon) {
+  InputDecoration _inputDecoration(
+    BuildContext context,
+    String hint,
+    IconData icon,
+  ) {
     return InputDecoration(
       hintText: hint,
-      prefixIcon: Icon(icon),
+      hintStyle: TextStyle(color: context.appMutedText),
+      prefixIcon: Icon(icon, color: context.appMutedText),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: context.appInputFill,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide.none,
@@ -1738,7 +1753,7 @@ class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF7FF),
+                color: context.appPanel,
                 borderRadius: BorderRadius.circular(18),
               ),
               child: Form(
@@ -1749,20 +1764,33 @@ class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
                     const SizedBox(height: 6),
                     const Text(
                       "Alta de profesor o alumno",
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      "Crea su cuenta, contraseña y datos principales para que luego pueda iniciar sesión con su código.",
+                      "Crea su cuenta, contraseÃ±a y datos principales para que luego pueda iniciar sesiÃ³n con su cÃ³digo.",
                       style: TextStyle(color: Colors.black54, height: 1.35),
                     ),
                     const SizedBox(height: 18),
                     DropdownButtonFormField<String>(
                       initialValue: _rol,
-                      decoration: _inputDecoration("Rol", Icons.badge_outlined),
+                      decoration: _inputDecoration(
+                        context,
+                        "Rol",
+                        Icons.badge_outlined,
+                      ),
                       items: const [
-                        DropdownMenuItem(value: "alumno", child: Text("Alumno")),
-                        DropdownMenuItem(value: "profesor", child: Text("Profesor")),
+                        DropdownMenuItem(
+                          value: "alumno",
+                          child: Text("Alumno"),
+                        ),
+                        DropdownMenuItem(
+                          value: "profesor",
+                          child: Text("Profesor"),
+                        ),
                       ],
                       onChanged: (value) {
                         if (value == null) return;
@@ -1773,7 +1801,11 @@ class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
                     TextFormField(
                       controller: _nombreCtrl,
                       textCapitalization: TextCapitalization.words,
-                      decoration: _inputDecoration("Nombre completo", Icons.person),
+                      decoration: _inputDecoration(
+                        context,
+                        "Nombre completo",
+                        Icons.person,
+                      ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return "Ingresa el nombre";
@@ -1785,12 +1817,16 @@ class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
                     TextFormField(
                       controller: _codigoCtrl,
                       keyboardType: TextInputType.number,
-                      decoration: _inputDecoration("Código de ingreso", Icons.numbers),
+                      decoration: _inputDecoration(context, 
+                        "CÃ³digo de ingreso",
+                        Icons.numbers,
+                      ),
                       onChanged: (_) => setState(() {}),
                       validator: (value) {
                         final limpio = value?.trim() ?? "";
-                        if (limpio.isEmpty) return "Ingresa el código";
-                        if (limpio.contains(" ")) return "El código no debe tener espacios";
+                        if (limpio.isEmpty) return "Ingresa el cÃ³digo";
+                        if (limpio.contains(" "))
+                          return "El cÃ³digo no debe tener espacios";
                         return null;
                       },
                     ),
@@ -1798,13 +1834,13 @@ class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.05),
+                        color: context.appSoftFill,
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Text(
                         "Correo interno generado: $_emailGenerado",
-                        style: const TextStyle(
-                          color: Colors.black87,
+                        style: TextStyle(
+                          color: context.appText,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -1813,11 +1849,14 @@ class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
                     TextFormField(
                       controller: _passwordCtrl,
                       obscureText: true,
-                      decoration: _inputDecoration("Contraseña", Icons.lock_outline),
+                      decoration: _inputDecoration(context, 
+                        "ContraseÃ±a",
+                        Icons.lock_outline,
+                      ),
                       validator: (value) {
                         final limpio = value?.trim() ?? "";
-                        if (limpio.isEmpty) return "Ingresa la contraseña";
-                        if (limpio.length < 6) return "Mínimo 6 caracteres";
+                        if (limpio.isEmpty) return "Ingresa la contraseÃ±a";
+                        if (limpio.length < 6) return "MÃ­nimo 6 caracteres";
                         return null;
                       },
                     ),
@@ -1825,10 +1864,10 @@ class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
                     TextFormField(
                       controller: _telefonoCtrl,
                       keyboardType: TextInputType.phone,
-                      decoration: _inputDecoration("Teléfono", Icons.phone),
+                      decoration: _inputDecoration(context, "TelÃ©fono", Icons.phone),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return "Ingresa el teléfono";
+                          return "Ingresa el telÃ©fono";
                         }
                         return null;
                       },
@@ -1837,12 +1876,13 @@ class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
                     TextFormField(
                       controller: _apoderadoCtrl,
                       textCapitalization: TextCapitalization.words,
-                      decoration: _inputDecoration(
+                      decoration: _inputDecoration(context, 
                         _rol == "alumno" ? "Apoderado" : "Apoderado (opcional)",
                         Icons.family_restroom,
                       ),
                       validator: (value) {
-                        if (_rol == "alumno" && (value == null || value.trim().isEmpty)) {
+                        if (_rol == "alumno" &&
+                            (value == null || value.trim().isEmpty)) {
                           return "Ingresa el apoderado";
                         }
                         return null;
@@ -1903,12 +1943,9 @@ class _DirectorInfoRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: const TextStyle(color: Colors.black54)),
+              Text(label, style: TextStyle(color: context.appMutedText)),
               const SizedBox(height: 2),
-              Text(
-                value,
-                style: const TextStyle(fontWeight: FontWeight.w900),
-              ),
+              Text(value, style: const TextStyle(fontWeight: FontWeight.w900)),
             ],
           ),
         ),
@@ -1938,15 +1975,15 @@ class _BigActionCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.appCard,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.black.withOpacity(0.06)),
+          border: Border.all(color: context.appBorder),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: context.appShadow,
               blurRadius: 14,
               offset: const Offset(0, 6),
-            )
+            ),
           ],
         ),
         child: Row(
@@ -1965,13 +2002,16 @@ class _BigActionCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
+                  Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
                   const SizedBox(height: 4),
-                  Text(subtitle, style: const TextStyle(color: Colors.black54)),
+                  Text(subtitle, style: TextStyle(color: context.appMutedText)),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Colors.black54),
+            Icon(Icons.chevron_right, color: context.appMutedText),
           ],
         ),
       ),
@@ -2016,9 +2056,9 @@ class _CrearPagoDirectorViewState extends State<CrearPagoDirectorView> {
       return;
     }
     if (monto <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Monto inválido")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Monto invÃ¡lido")));
       return;
     }
 
@@ -2041,27 +2081,38 @@ class _CrearPagoDirectorViewState extends State<CrearPagoDirectorView> {
 
       if (alumnosDocs.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Selecciona al menos 1 alumno o usa 'Todos'")),
+          const SnackBar(
+            content: Text("Selecciona al menos 1 alumno o usa 'Todos'"),
+          ),
         );
         return;
       }
     }
 
-    // 2) Crear pagos en batch (Firestore tiene límite 500 escrituras por batch)
+    // 2) Crear pagos en batch (Firestore tiene lÃ­mite 500 escrituras por batch)
     final now = Timestamp.now();
     final vencTs = Timestamp.fromDate(_vencimiento);
 
     final chunks = <List<QueryDocumentSnapshot>>[];
     const maxBatch = 450; // margen seguro
     for (int i = 0; i < alumnosDocs.length; i += maxBatch) {
-      chunks.add(alumnosDocs.sublist(i, (i + maxBatch > alumnosDocs.length) ? alumnosDocs.length : i + maxBatch));
+      chunks.add(
+        alumnosDocs.sublist(
+          i,
+          (i + maxBatch > alumnosDocs.length)
+              ? alumnosDocs.length
+              : i + maxBatch,
+        ),
+      );
     }
 
     for (final chunk in chunks) {
       final batch = FirebaseFirestore.instance.batch();
       for (final alumno in chunk) {
         final alumnoId = alumno.id;
-        final alumnoNombre = (alumno.data() as Map<String, dynamic>)["nombre"]?.toString() ?? "Alumno";
+        final alumnoNombre =
+            (alumno.data() as Map<String, dynamic>)["nombre"]?.toString() ??
+            "Alumno";
 
         final ref = FirebaseFirestore.instance.collection("pagos").doc();
         batch.set(ref, {
@@ -2081,7 +2132,9 @@ class _CrearPagoDirectorViewState extends State<CrearPagoDirectorView> {
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Pago creado ✅ (${alumnosDocs.length} alumno(s))")),
+      SnackBar(
+        content: Text("Pago creado âœ… (${alumnosDocs.length} alumno(s))"),
+      ),
     );
     Navigator.pop(context);
   }
@@ -2103,26 +2156,35 @@ class _CrearPagoDirectorViewState extends State<CrearPagoDirectorView> {
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF7FF),
+                color: context.appPanel,
                 borderRadius: BorderRadius.circular(18),
               ),
               child: ListView(
                 padding: const EdgeInsets.all(14),
                 children: [
-                  const Text("Nombre del pago", style: TextStyle(fontWeight: FontWeight.w900)),
+                  const Text(
+                    "Nombre del pago",
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _conceptoCtrl,
                     decoration: InputDecoration(
                       hintText: "Ej: Mensualidad Marzo",
                       filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                      fillColor: context.appInputFill,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
                   ),
 
                   const SizedBox(height: 14),
-                  const Text("Monto (S/)", style: TextStyle(fontWeight: FontWeight.w900)),
+                  const Text(
+                    "Monto (S/)",
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _montoCtrl,
@@ -2130,8 +2192,11 @@ class _CrearPagoDirectorViewState extends State<CrearPagoDirectorView> {
                     decoration: InputDecoration(
                       hintText: "Ej: 150",
                       filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                      fillColor: context.appInputFill,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
                   ),
 
@@ -2139,7 +2204,10 @@ class _CrearPagoDirectorViewState extends State<CrearPagoDirectorView> {
                   Row(
                     children: [
                       const Expanded(
-                        child: Text("Fecha de vencimiento", style: TextStyle(fontWeight: FontWeight.w900)),
+                        child: Text(
+                          "Fecha de vencimiento",
+                          style: TextStyle(fontWeight: FontWeight.w900),
+                        ),
                       ),
                       TextButton(
                         onPressed: () async {
@@ -2149,15 +2217,19 @@ class _CrearPagoDirectorViewState extends State<CrearPagoDirectorView> {
                             firstDate: DateTime(2023),
                             lastDate: DateTime(2035),
                           );
-                          if (picked != null) setState(() => _vencimiento = picked);
+                          if (picked != null)
+                            setState(() => _vencimiento = picked);
                         },
                         child: const Text("Cambiar"),
-                      )
+                      ),
                     ],
                   ),
                   Text(
                     "${_vencimiento.day.toString().padLeft(2, "0")}/${_vencimiento.month.toString().padLeft(2, "0")}/${_vencimiento.year}",
-                    style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.w700),
+                    style: TextStyle(
+                      color: context.appMutedText,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
 
                   const SizedBox(height: 18),
@@ -2170,20 +2242,26 @@ class _CrearPagoDirectorViewState extends State<CrearPagoDirectorView> {
                       });
                     },
                     title: const Text("Asignar a TODOS los alumnos"),
-                    subtitle: const Text("Si lo apagas, podrás seleccionar alumnos específicos"),
+                    subtitle: const Text(
+                      "Si lo apagas, podrÃ¡s seleccionar alumnos especÃ­ficos",
+                    ),
                     activeColor: kPrimary,
                   ),
 
                   if (!_paraTodos) ...[
                     const SizedBox(height: 10),
                     TextField(
-                      onChanged: (v) => setState(() => _filtro = v.trim().toLowerCase()),
+                      onChanged: (v) =>
+                          setState(() => _filtro = v.trim().toLowerCase()),
                       decoration: InputDecoration(
                         hintText: "Buscar alumno...",
                         prefixIcon: const Icon(Icons.search),
                         filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                        fillColor: context.appInputFill,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide.none,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -2195,27 +2273,38 @@ class _CrearPagoDirectorViewState extends State<CrearPagoDirectorView> {
                             .where("rol", isEqualTo: "alumno")
                             .snapshots(),
                         builder: (context, snapshot) {
-                          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                          if (!snapshot.hasData)
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
 
                           final alumnos = snapshot.data!.docs.where((d) {
-                            final nombre = (d["nombre"] ?? "").toString().toLowerCase();
+                            final nombre = (d["nombre"] ?? "")
+                                .toString()
+                                .toLowerCase();
                             if (_filtro.isEmpty) return true;
                             return nombre.contains(_filtro);
                           }).toList();
 
                           return ListView.separated(
                             itemCount: alumnos.length,
-                            separatorBuilder: (_, __) => const Divider(height: 1),
+                            separatorBuilder: (_, __) =>
+                                const Divider(height: 1),
                             itemBuilder: (context, i) {
                               final a = alumnos[i];
                               final id = a.id;
-                              final nombre = (a["nombre"] ?? "Alumno").toString();
-                              final selected = _alumnosSeleccionados.contains(id);
+                              final nombre = (a["nombre"] ?? "Alumno")
+                                  .toString();
+                              final selected = _alumnosSeleccionados.contains(
+                                id,
+                              );
 
                               return ListTile(
                                 title: Text(nombre),
                                 trailing: Icon(
-                                  selected ? Icons.check_circle : Icons.add_circle_outline,
+                                  selected
+                                      ? Icons.check_circle
+                                      : Icons.add_circle_outline,
                                   color: selected ? kPrimary : Colors.grey,
                                 ),
                                 onTap: () {
@@ -2241,7 +2330,9 @@ class _CrearPagoDirectorViewState extends State<CrearPagoDirectorView> {
                       backgroundColor: kPrimary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
                     icon: const Icon(Icons.save),
                     label: const Text("Crear pago"),
@@ -2258,7 +2349,7 @@ class _CrearPagoDirectorViewState extends State<CrearPagoDirectorView> {
 }
 
 /// ------------------------------
-/// 3) VER PAGOS → LISTA DE ALUMNOS
+/// 3) VER PAGOS â†’ LISTA DE ALUMNOS
 /// ------------------------------
 class ListaAlumnosPagosView extends StatelessWidget {
   const ListaAlumnosPagosView({super.key});
@@ -2280,7 +2371,7 @@ class ListaAlumnosPagosView extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF7FF),
+                color: context.appPanel,
                 borderRadius: BorderRadius.circular(18),
               ),
               child: StreamBuilder<QuerySnapshot>(
@@ -2290,7 +2381,8 @@ class ListaAlumnosPagosView extends StatelessWidget {
                     .orderBy("nombre")
                     .snapshots(),
                 builder: (context, snap) {
-                  if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+                  if (!snap.hasData)
+                    return const Center(child: CircularProgressIndicator());
 
                   final alumnos = snap.data!.docs;
                   if (alumnos.isEmpty) {
@@ -2322,18 +2414,26 @@ class ListaAlumnosPagosView extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: context.appCard,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.black.withOpacity(0.06)),
+                            border: Border.all(color: context.appBorder),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.person, color: Colors.black54),
+                              Icon(Icons.person, color: context.appMutedText),
                               const SizedBox(width: 10),
                               Expanded(
-                                child: Text(nombre, style: const TextStyle(fontWeight: FontWeight.w900)),
+                                child: Text(
+                                  nombre,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
                               ),
-                              const Icon(Icons.chevron_right, color: Colors.black54),
+                              Icon(
+                                Icons.chevron_right,
+                                color: context.appMutedText,
+                              ),
                             ],
                           ),
                         ),
@@ -2353,7 +2453,7 @@ class ListaAlumnosPagosView extends StatelessWidget {
 /// ------------------------------
 /// 4) PAGOS DEL ALUMNO (DIRECTOR)
 ///     Tabs: Pendientes / Atrasados
-///     Botón: Marcar pagado
+///     BotÃ³n: Marcar pagado
 /// ------------------------------
 class PagosAlumnoDirectorView extends StatelessWidget {
   final String alumnoId;
@@ -2383,7 +2483,10 @@ class PagosAlumnoDirectorView extends StatelessWidget {
   String _fmtFecha(DateTime f) =>
       "${f.day.toString().padLeft(2, "0")}/${f.month.toString().padLeft(2, "0")}/${f.year}";
 
-  Future<void> _marcarPagado(BuildContext context, QueryDocumentSnapshot doc) async {
+  Future<void> _marcarPagado(
+    BuildContext context,
+    QueryDocumentSnapshot doc,
+  ) async {
     await doc.reference.update({
       "estado": "pagado",
       "pagadoAt": Timestamp.now(),
@@ -2392,9 +2495,9 @@ class PagosAlumnoDirectorView extends StatelessWidget {
     });
 
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Marcado como pagado ✅")),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text("Marcado como pagado âœ…")));
   }
 
   @override
@@ -2414,7 +2517,7 @@ class PagosAlumnoDirectorView extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF7FF),
+                color: context.appPanel,
                 borderRadius: BorderRadius.circular(18),
               ),
               child: DefaultTabController(
@@ -2454,7 +2557,10 @@ class PagosAlumnoDirectorView extends StatelessWidget {
                             .orderBy("fechaVencimiento", descending: false)
                             .snapshots(),
                         builder: (context, snap) {
-                          if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+                          if (!snap.hasData)
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
 
                           final docs = snap.data!.docs;
 
@@ -2489,12 +2595,19 @@ class PagosAlumnoDirectorView extends StatelessWidget {
     );
   }
 
-  Widget _lista(BuildContext context, List<QueryDocumentSnapshot> docs, {required bool isAtrasados}) {
+  Widget _lista(
+    BuildContext context,
+    List<QueryDocumentSnapshot> docs, {
+    required bool isAtrasados,
+  }) {
     if (docs.isEmpty) {
       return Center(
         child: Text(
           isAtrasados ? "No tiene atrasados" : "No tiene pendientes",
-          style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            color: Colors.black54,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       );
     }
@@ -2509,7 +2622,9 @@ class PagosAlumnoDirectorView extends StatelessWidget {
 
         final concepto = (d["concepto"] ?? "Pago").toString();
         final moneda = (d["moneda"] ?? "PEN").toString();
-        final monto = (d["monto"] is num) ? (d["monto"] as num).toDouble() : 0.0;
+        final monto = (d["monto"] is num)
+            ? (d["monto"] as num).toDouble()
+            : 0.0;
 
         DateTime? venc;
         final ts = d["fechaVencimiento"];
@@ -2527,23 +2642,39 @@ class PagosAlumnoDirectorView extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(isAtrasados ? Icons.error_outline : Icons.schedule, color: border),
+              Icon(
+                isAtrasados ? Icons.error_outline : Icons.schedule,
+                color: border,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(concepto, style: const TextStyle(fontWeight: FontWeight.w900)),
+                    Text(
+                      concepto,
+                      style: const TextStyle(fontWeight: FontWeight.w900),
+                    ),
                     const SizedBox(height: 4),
-                    Text("Monto: $moneda ${monto.toStringAsFixed(monto % 1 == 0 ? 0 : 2)}",
-                        style: const TextStyle(fontWeight: FontWeight.w700)),
+                    Text(
+                      "Monto: $moneda ${monto.toStringAsFixed(monto % 1 == 0 ? 0 : 2)}",
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
                     const SizedBox(height: 2),
-                    Text("Vence: ${venc == null ? "—" : _fmtFecha(venc)}",
-                        style: const TextStyle(color: Colors.black54)),
+                    Text(
+                      "Vence: ${venc == null ? "â€”" : _fmtFecha(venc)}",
+                      style: const TextStyle(color: Colors.black54),
+                    ),
                     if (isAtrasados)
                       const Padding(
                         padding: EdgeInsets.only(top: 4),
-                        child: Text("ATRASADO", style: TextStyle(color: Colors.red, fontWeight: FontWeight.w900)),
+                        child: Text(
+                          "ATRASADO",
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
                       ),
                   ],
                 ),
@@ -2554,7 +2685,9 @@ class PagosAlumnoDirectorView extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 onPressed: () => _marcarPagado(context, doc),
                 child: const Text("Marcar pagado"),
@@ -2598,12 +2731,12 @@ class AppHeader extends StatelessWidget {
                     color: Colors.black.withOpacity(0.18),
                     blurRadius: 14,
                     offset: const Offset(0, 6),
-                  )
+                  ),
                 ],
               ),
               child: Image.asset(
                 "assets/images/logo.png",
-                height: 44, // ✅ logo grande
+                height: 44, // âœ… logo grande
                 fit: BoxFit.contain,
               ),
             ),
@@ -2613,3 +2746,4 @@ class AppHeader extends StatelessWidget {
     );
   }
 }
+

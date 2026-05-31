@@ -149,9 +149,14 @@ class _SplashScreenState extends State<SplashScreen>
 
                     SlideTransition(
                       position: _logoAnimation,
-                      child: Image.asset(
-                        'assets/images/logo.png',
-                        height: 120,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          height: 120,
+                          width: 120,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
 

@@ -4,6 +4,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:sbg_profesores/firebase_options.dart';
 import 'package:sbg_profesores/services/notification_service.dart';
 import 'package:sbg_profesores/splash_screen.dart';
+import 'package:sbg_profesores/theme/app_theme.dart';
 
 const kPrimary = Color.fromARGB(255, 71, 76, 223);
 
@@ -14,17 +15,32 @@ void main() async {
   await initializeDateFormatting('es_ES', null);
   await NotificationService.instance.initialize();
 
-  runApp(const MyApp());
+  final themeController = await AppThemeController.load();
+
+  runApp(MyApp(themeController: themeController));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final AppThemeController themeController;
+
+  const MyApp({super.key, required this.themeController});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      title: 'SBG Profesores',
-      home: SplashScreen(),
+    return AppThemeScope(
+      controller: themeController,
+      child: AnimatedBuilder(
+        animation: themeController,
+        builder: (context, _) {
+          return MaterialApp(
+            title: 'SBG Profesores',
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            themeMode: themeController.themeMode,
+            home: const SplashScreen(),
+          );
+        },
+      ),
     );
   }
 }

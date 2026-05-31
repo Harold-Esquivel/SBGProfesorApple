@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:sbg_profesores/theme/app_theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sbg_profesores/theme/app_colors.dart'; // tu kPrimary
-import 'package:sbg_profesores/views/perfil_view.dart'; // si tienes un PerfilAlumno ya, úsalo
+import 'package:sbg_profesores/views/perfil_view.dart'; // si tienes un PerfilAlumno ya, Ãºsalo
 import 'package:sbg_profesores/widgets/classcard.dart'; // tu ClaseCard
+import 'package:sbg_profesores/widgets/liquid_glass_bottom_nav.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:sbg_profesores/services/auth_navigation_service.dart';
@@ -15,14 +17,17 @@ class HomeAlumno extends StatefulWidget {
   State<HomeAlumno> createState() => _HomeAlumnoState();
 }
 
-Future<String?> _pickDuracion(BuildContext context, {required String actual}) async {
+Future<String?> _pickDuracion(
+  BuildContext context, {
+  required String actual,
+}) async {
   const opciones = ["45", "60", "90", "120"];
 
   return showDialog<String>(
     context: context,
     builder: (_) {
       return AlertDialog(
-        title: const Text("Elige duración"),
+        title: const Text("Elige duraciÃ³n"),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: opciones.map((v) {
@@ -54,7 +59,7 @@ Future<void> _mostrarModalSolicitarClase(BuildContext context) async {
 
   final alumnoId = user.uid;
 
-  // ✅ Nombre del alumno
+  // âœ… Nombre del alumno
   final alumnoDoc = await FirebaseFirestore.instance
       .collection("usuarios")
       .doc(alumnoId)
@@ -62,11 +67,11 @@ Future<void> _mostrarModalSolicitarClase(BuildContext context) async {
 
   final alumnoNombre = (alumnoDoc.data()?["nombre"] ?? "Alumno").toString();
 
-  // ✅ Controllers
+  // âœ… Controllers
   final materiaController = TextEditingController();
   final mensajeController = TextEditingController();
 
-  // ✅ Campos
+  // âœ… Campos
   DateTime fechaSeleccionada = DateTime.now();
   TimeOfDay? horaInicio;
   String duracion = "60"; // 45 | 60 | 90 | 120
@@ -79,21 +84,27 @@ Future<void> _mostrarModalSolicitarClase(BuildContext context) async {
 
   // Helper: validar horaFin > horaInicio
   int _durToMin(String d) {
-  switch (d) {
-    case "45": return 45;
-    case "60": return 60;
-    case "90": return 90;
-    case "120": return 120;
-    default: return 60;
+    switch (d) {
+      case "45":
+        return 45;
+      case "60":
+        return 60;
+      case "90":
+        return 90;
+      case "120":
+        return 120;
+      default:
+        return 60;
+    }
   }
-}
 
-TimeOfDay _addMinutes(TimeOfDay t, int minutes) {
-  final total = t.hour * 60 + t.minute + minutes;
-  final h = (total ~/ 60) % 24;
-  final m = total % 60;
-  return TimeOfDay(hour: h, minute: m);
-}
+  TimeOfDay _addMinutes(TimeOfDay t, int minutes) {
+    final total = t.hour * 60 + t.minute + minutes;
+    final h = (total ~/ 60) % 24;
+    final m = total % 60;
+    return TimeOfDay(hour: h, minute: m);
+  }
+
   showDialog(
     context: context,
     barrierDismissible: true,
@@ -102,10 +113,14 @@ TimeOfDay _addMinutes(TimeOfDay t, int minutes) {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
         child: StatefulBuilder(
           builder: (context, setModalState) {
-            final textoInicio = horaInicio == null ? "Hora inicio" : fmt24(horaInicio!);
+            final textoInicio = horaInicio == null
+                ? "Hora inicio"
+                : fmt24(horaInicio!);
 
             final minutos = _durToMin(duracion);
-            final horaFinCalc = (horaInicio == null) ? null : _addMinutes(horaInicio!, minutos);
+            final horaFinCalc = (horaInicio == null)
+                ? null
+                : _addMinutes(horaInicio!, minutos);
 
             return Padding(
               padding: const EdgeInsets.all(18),
@@ -117,8 +132,10 @@ TimeOfDay _addMinutes(TimeOfDay t, int minutes) {
                     const Text(
                       "Solicitar clase",
                       textAlign: TextAlign.center,
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 14),
 
@@ -127,7 +144,7 @@ TimeOfDay _addMinutes(TimeOfDay t, int minutes) {
                       controller: materiaController,
                       style: const TextStyle(color: Colors.white),
                       decoration: darkInput(
-                        hint: "Materia (ej: Matemática)",
+                        hint: "Materia (ej: MatemÃ¡tica)",
                         icon: Icons.book,
                       ),
                     ),
@@ -177,15 +194,19 @@ TimeOfDay _addMinutes(TimeOfDay t, int minutes) {
                       borderRadius: BorderRadius.circular(14),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 14),
+                          horizontal: 14,
+                          vertical: 14,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF1F1F1F),
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.access_time,
-                                color: Colors.white70),
+                            const Icon(
+                              Icons.access_time,
+                              color: Colors.white70,
+                            ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
@@ -198,8 +219,10 @@ TimeOfDay _addMinutes(TimeOfDay t, int minutes) {
                                 ),
                               ),
                             ),
-                            const Icon(Icons.keyboard_arrow_down,
-                                color: Colors.white70),
+                            const Icon(
+                              Icons.keyboard_arrow_down,
+                              color: Colors.white70,
+                            ),
                           ],
                         ),
                       ),
@@ -207,40 +230,49 @@ TimeOfDay _addMinutes(TimeOfDay t, int minutes) {
                     const SizedBox(height: 10),
 
                     InkWell(
-  onTap: () async {
-    final picked = await _pickDuracion(context, actual: duracion);
-    if (picked != null) {
-      setModalState(() => duracion = picked);
-    }
-  },
-  borderRadius: BorderRadius.circular(14),
-  child: Container(
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-    decoration: BoxDecoration(
-      color: const Color(0xFF1F1F1F),
-      borderRadius: BorderRadius.circular(14),
-    ),
-    child: Row(
-      children: [
-        const Icon(Icons.timer, color: Colors.white70),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            "Duración: ${duracion} min",
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        const Icon(Icons.keyboard_arrow_down, color: Colors.white70),
-      ],
-    ),
-  ),
-),
-          
-const SizedBox(height: 10),                      
+                      onTap: () async {
+                        final picked = await _pickDuracion(
+                          context,
+                          actual: duracion,
+                        );
+                        if (picked != null) {
+                          setModalState(() => duracion = picked);
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1F1F1F),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.timer, color: Colors.white70),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                "DuraciÃ³n: ${duracion} min",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            const Icon(
+                              Icons.keyboard_arrow_down,
+                              color: Colors.white70,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
 
                     // Tipo clase
                     Wrap(
@@ -285,8 +317,9 @@ const SizedBox(height: 10),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                             side: BorderSide(
-                              color:
-                                  tipoClase == "virtual" ? kPrimary : Colors.white24,
+                              color: tipoClase == "virtual"
+                                  ? kPrimary
+                                  : Colors.white24,
                             ),
                           ),
                         ),
@@ -300,8 +333,10 @@ const SizedBox(height: 10),
                         () => filtroProfe = v.trim().toLowerCase(),
                       ),
                       style: const TextStyle(color: Colors.white),
-                      decoration:
-                          darkInput(hint: "Buscar profesor...", icon: Icons.search),
+                      decoration: darkInput(
+                        hint: "Buscar profesor...",
+                        icon: Icons.search,
+                      ),
                     ),
                     const SizedBox(height: 6),
 
@@ -315,19 +350,22 @@ const SizedBox(height: 10),
                             .snapshots(),
                         builder: (context, snapshot) {
                           if (!snapshot.hasData) {
-                            return const Center(child: CircularProgressIndicator());
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
                           }
 
                           final profes = snapshot.data!.docs.where((doc) {
-                            final n =
-                                (doc["nombre"] ?? "").toString().toLowerCase();
+                            final n = (doc["nombre"] ?? "")
+                                .toString()
+                                .toLowerCase();
                             if (filtroProfe.isEmpty) return true;
                             return n.contains(filtroProfe);
                           }).toList();
 
                           if (profes.isEmpty) {
                             return const Center(
-                              child: Text("No se encontró profesor"),
+                              child: Text("No se encontrÃ³ profesor"),
                             );
                           }
 
@@ -338,9 +376,10 @@ const SizedBox(height: 10),
                             itemBuilder: (context, i) {
                               final p = profes[i];
                               final pid = p.id;
-                              final nombre =
-                                  (p["nombre"] ?? "Sin nombre").toString();
-                              final seleccionado = profesorIdSeleccionado == pid;
+                              final nombre = (p["nombre"] ?? "Sin nombre")
+                                  .toString();
+                              final seleccionado =
+                                  profesorIdSeleccionado == pid;
 
                               return ListTile(
                                 title: Text(nombre),
@@ -376,7 +415,7 @@ const SizedBox(height: 10),
                     ),
                     const SizedBox(height: 10),
 
-                    // BOTÓN SOLICITAR
+                    // BOTÃ“N SOLICITAR
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: kPrimary,
@@ -400,11 +439,13 @@ const SizedBox(height: 10),
                         }
 
                         if (horaInicio == null) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text("Elige la hora de inicio")),
-  );
-  return;
-}
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Elige la hora de inicio"),
+                            ),
+                          );
+                          return;
+                        }
                         if (profesorIdSeleccionado == null) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text("Elige un profesor")),
@@ -415,26 +456,28 @@ const SizedBox(height: 10),
                         await FirebaseFirestore.instance
                             .collection("solicitudes_clase")
                             .add({
-                          "alumnoId": alumnoId,
-                          "alumnoNombre": alumnoNombre,
-                          "profesorId": profesorIdSeleccionado,
-                          "profesorNombre": profesorNombreSeleccionado,
-                          "materia": materia,
-                          "mensaje": mensaje,
-                          "fecha": Timestamp.fromDate(fechaSeleccionada),
-                          "horaInicio": fmt24(horaInicio!),
-                          "horaFin": fmt24(horaFinCalc!),
-                          "duracionMin": minutos,
-                          "tipoClase": tipoClase, // presencial | virtual
-                          "estado": "pendiente",
-                          "createdAt": Timestamp.now(),
-                        });
+                              "alumnoId": alumnoId,
+                              "alumnoNombre": alumnoNombre,
+                              "profesorId": profesorIdSeleccionado,
+                              "profesorNombre": profesorNombreSeleccionado,
+                              "materia": materia,
+                              "mensaje": mensaje,
+                              "fecha": Timestamp.fromDate(fechaSeleccionada),
+                              "horaInicio": fmt24(horaInicio!),
+                              "horaFin": fmt24(horaFinCalc!),
+                              "duracionMin": minutos,
+                              "tipoClase": tipoClase, // presencial | virtual
+                              "estado": "pendiente",
+                              "createdAt": Timestamp.now(),
+                            });
 
                         if (context.mounted) Navigator.pop(context);
 
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Solicitud enviada ✅")),
+                            const SnackBar(
+                              content: Text("Solicitud enviada âœ…"),
+                            ),
                           );
                         }
                       },
@@ -449,7 +492,6 @@ const SizedBox(height: 10),
     },
   );
 }
-
 
 class _HomeAlumnoState extends State<HomeAlumno> {
   int _currentIndex = 2;
@@ -475,7 +517,9 @@ class _HomeAlumnoState extends State<HomeAlumno> {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      return const Scaffold(body: Center(child: Text("Usuario no autenticado")));
+      return const Scaffold(
+        body: Center(child: Text("Usuario no autenticado")),
+      );
     }
 
     final paginas = [
@@ -496,7 +540,8 @@ class _HomeAlumnoState extends State<HomeAlumno> {
     ];
 
     return Scaffold(
-      backgroundColor: kPrimary,
+      extendBody: true,
+      backgroundColor: context.appPrimaryBackground,
       body: Column(
         children: [
           AppHeader(titulo: tituloActual()),
@@ -504,100 +549,40 @@ class _HomeAlumnoState extends State<HomeAlumno> {
         ],
       ),
       floatingActionButton: (_currentIndex == 0)
-    ? FloatingActionButton(
-        backgroundColor: kPrimary, // o el color que uses en la app
-        onPressed: () => _mostrarModalSolicitarClase(context),
-        child: const Icon(Icons.add, color: Colors.white, size: 34),
-      )
-    : null,
-floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      // ✅ SIN FAB (alumno no crea clases)
-      bottomNavigationBar: BottomAppBar(
-        color: kPrimary,
-        child: SafeArea(
-          top: false,
-          child: SizedBox(
-            height: 60,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _tabItem(icon: Icons.calendar_today, label: "Horario", index: 0),
-                _tabItem(icon: Icons.payments_outlined, label: "Pagos", index: 1),
-                _tabItem(icon: Icons.person_outline, label: "Perfil", index: 2),
-                _tabItem(icon: Icons.article_rounded, label: "Informes", index: 3),
-                _logoutTabItem(),
-              ],
-            ),
+          ? FloatingActionButton(
+              backgroundColor: kPrimary, // o el color que uses en la app
+              onPressed: () => _mostrarModalSolicitarClase(context),
+              child: const Icon(Icons.add, color: Colors.white, size: 34),
+            )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      bottomNavigationBar: LiquidGlassBottomNav(
+        currentIndex: _currentIndex,
+        destinations: const [
+          LiquidGlassNavDestination(
+            icon: Icons.calendar_today,
+            label: "Horario",
+            index: 0,
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _tabItem({
-    required IconData icon,
-    required String label,
-    required int index,
-  }) {
-    final selected = _currentIndex == index;
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(30),
-      onTap: () => setState(() => _currentIndex = index),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              height: 1.0,
-              color: Colors.white,
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
-            ),
+          LiquidGlassNavDestination(
+            icon: Icons.payments_outlined,
+            label: "Pagos",
+            index: 1,
           ),
-          const SizedBox(height: 4),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            height: 38,
-            width: 38,
-            decoration: BoxDecoration(
-              color: selected ? Colors.white : Colors.transparent,
-              shape: BoxShape.circle,
-            ),
-            alignment: Alignment.center,
-            child: Icon(
-              icon,
-              color: selected ? kPrimary : Colors.white,
-              size: 20,
-            ),
+          LiquidGlassNavDestination(
+            icon: Icons.person_outline,
+            label: "Perfil",
+            index: 2,
+          ),
+          LiquidGlassNavDestination(
+            icon: Icons.article_rounded,
+            label: "Informes",
+            index: 3,
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _logoutTabItem() {
-    return InkWell(
-      borderRadius: BorderRadius.circular(30),
-      onTap: () async =>
-          AuthNavigationService.signOutAndReturnToLogin(context),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Text(
-            "Cerrar sesión",
-            style: TextStyle(
-              fontSize: 10,
-              height: 1.0,
-              color: Colors.white,
-            ),
-          ),
-          SizedBox(height: 4),
-          Icon(Icons.logout, color: Colors.white, size: 20),
-        ],
+        onDestinationSelected: (index) => setState(() => _currentIndex = index),
+        onLogoutPressed: () =>
+            AuthNavigationService.signOutAndReturnToLogin(context),
       ),
     );
   }
@@ -628,7 +613,10 @@ class _HorarioAlumnoViewState extends State<HorarioAlumnoView> {
     return ((dias + inicioAnio.weekday) / 7).ceil();
   }
 
-  void _mostrarDetalleClaseSoloLectura(BuildContext context, QueryDocumentSnapshot clase) {
+  void _mostrarDetalleClaseSoloLectura(
+    BuildContext context,
+    QueryDocumentSnapshot clase,
+  ) {
     final data = clase.data() as Map<String, dynamic>;
 
     final materia = (data["materia"] ?? "Sin materia").toString();
@@ -706,9 +694,14 @@ class _HorarioAlumnoViewState extends State<HorarioAlumnoView> {
   }
 
   Widget _contenidoHorario(BuildContext context) {
-    DateTime inicioSemana =
-        widget.semanaActual.subtract(Duration(days: widget.semanaActual.weekday - 1));
-    inicioSemana = DateTime(inicioSemana.year, inicioSemana.month, inicioSemana.day);
+    DateTime inicioSemana = widget.semanaActual.subtract(
+      Duration(days: widget.semanaActual.weekday - 1),
+    );
+    inicioSemana = DateTime(
+      inicioSemana.year,
+      inicioSemana.month,
+      inicioSemana.day,
+    );
     final siguienteSemana = inicioSemana.add(const Duration(days: 7));
 
     return Column(
@@ -743,8 +736,14 @@ class _HorarioAlumnoViewState extends State<HorarioAlumnoView> {
               stream: FirebaseFirestore.instance
                   .collection("clases")
                   .where("alumnosId", arrayContains: widget.alumnoId)
-                  .where("fecha", isGreaterThanOrEqualTo: Timestamp.fromDate(inicioSemana))
-                  .where("fecha", isLessThan: Timestamp.fromDate(siguienteSemana))
+                  .where(
+                    "fecha",
+                    isGreaterThanOrEqualTo: Timestamp.fromDate(inicioSemana),
+                  )
+                  .where(
+                    "fecha",
+                    isLessThan: Timestamp.fromDate(siguienteSemana),
+                  )
                   .orderBy("fecha")
                   .snapshots(),
               builder: (context, snapshot) {
@@ -757,10 +756,10 @@ class _HorarioAlumnoViewState extends State<HorarioAlumnoView> {
                 final clasesPorDia = <String, List<QueryDocumentSnapshot>>{
                   "Lunes": [],
                   "Martes": [],
-                  "Miércoles": [],
+                  "MiÃ©rcoles": [],
                   "Jueves": [],
                   "Viernes": [],
-                  "Sábado": [],
+                  "SÃ¡bado": [],
                   "Domingo": [],
                 };
 
@@ -769,69 +768,82 @@ class _HorarioAlumnoViewState extends State<HorarioAlumnoView> {
                   const dias = [
                     "Lunes",
                     "Martes",
-                    "Miércoles",
+                    "MiÃ©rcoles",
                     "Jueves",
                     "Viernes",
-                    "Sábado",
-                    "Domingo"
+                    "SÃ¡bado",
+                    "Domingo",
                   ];
                   clasesPorDia[dias[fecha.weekday - 1]]!.add(clase);
                 }
 
                 return ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                children: clasesPorDia.entries.map((entry) {
-                  final dia = entry.key;
-                  final lista = entry.value;
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
+                  children: clasesPorDia.entries.map((entry) {
+                    final dia = entry.key;
+                    final lista = entry.value;
 
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 16),
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 16),
 
-                      // 🔹 Título del día (siempre visible)
-                      Text(
-                        dia.toUpperCase(),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
-                        ),
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      // 🔹 Solo muestra clases si existen
-                      ...lista.map((clase) {
-                        final data = clase.data() as Map<String, dynamic>;
-                        final horaInicio = data["horaInicio"]?.toString() ?? "";
-                        final horaFin = data["horaFin"]?.toString() ?? "";
-                        final materia = data["materia"]?.toString() ?? "Sin materia";
-                        final estado = data["estado"]?.toString() ?? "activa";
-                        final tipoClase =
-                            (data["tipoClase"] ?? data["tipo"] ?? "presencial").toString();
-
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: GestureDetector(
-                            onTap: () => _mostrarDetalleClaseSoloLectura(context, clase),
-                            child: ClaseCard(
-                              hora: (horaInicio.isNotEmpty && horaFin.isNotEmpty)
-                                  ? "$horaInicio - $horaFin"
-                                  : "Hora no definida",
-                              materia: materia,
-                              profesor: "Profesor",
-                              estado: estado,
-                              tipoClase: tipoClase,
-                            ),
+                        // ðŸ”¹ TÃ­tulo del dÃ­a (siempre visible)
+                        Text(
+                          dia.toUpperCase(),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
                           ),
-                        );
-                      }),
+                        ),
 
-                      const SizedBox(height: 6),
-                    ],
-                  );
-                }).toList(),
-              );
+                        const SizedBox(height: 10),
+
+                        // ðŸ”¹ Solo muestra clases si existen
+                        ...lista.map((clase) {
+                          final data = clase.data() as Map<String, dynamic>;
+                          final horaInicio =
+                              data["horaInicio"]?.toString() ?? "";
+                          final horaFin = data["horaFin"]?.toString() ?? "";
+                          final materia =
+                              data["materia"]?.toString() ?? "Sin materia";
+                          final estado = data["estado"]?.toString() ?? "activa";
+                          final tipoClase =
+                              (data["tipoClase"] ??
+                                      data["tipo"] ??
+                                      "presencial")
+                                  .toString();
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: GestureDetector(
+                              onTap: () => _mostrarDetalleClaseSoloLectura(
+                                context,
+                                clase,
+                              ),
+                              child: ClaseCard(
+                                hora:
+                                    (horaInicio.isNotEmpty &&
+                                        horaFin.isNotEmpty)
+                                    ? "$horaInicio - $horaFin"
+                                    : "Hora no definida",
+                                materia: materia,
+                                profesor: "Profesor",
+                                estado: estado,
+                                tipoClase: tipoClase,
+                              ),
+                            ),
+                          );
+                        }),
+
+                        const SizedBox(height: 6),
+                      ],
+                    );
+                  }).toList(),
+                );
               },
             ),
           ),
@@ -843,14 +855,14 @@ class _HorarioAlumnoViewState extends State<HorarioAlumnoView> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: kPrimary,
+      color: context.appPrimaryBackground,
       child: SafeArea(
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 0, 14, 6),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF7FF),
+              color: context.appPanel,
               borderRadius: BorderRadius.circular(18),
             ),
             child: ClipRRect(
@@ -874,7 +886,10 @@ Widget _infoFila(String titulo, String valor) {
           width: 70,
           child: Text(
             "$titulo:",
-            style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.grey),
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.grey,
+            ),
           ),
         ),
         Expanded(child: Text(valor)),
@@ -883,7 +898,6 @@ Widget _infoFila(String titulo, String valor) {
   );
 }
 
-
 class PagosAlumnoView extends StatelessWidget {
   final String alumnoId;
   const PagosAlumnoView({super.key, required this.alumnoId});
@@ -891,14 +905,14 @@ class PagosAlumnoView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: kPrimary,
+      color: context.appPrimaryBackground,
       child: SafeArea(
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 0, 14, 6),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF7FF),
+              color: context.appPanel,
               borderRadius: BorderRadius.circular(18),
             ),
             child: ClipRRect(
@@ -909,7 +923,7 @@ class PagosAlumnoView extends StatelessWidget {
                   children: [
                     const SizedBox(height: 8),
 
-                    // ✅ Tabs
+                    // âœ… Tabs
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 12),
                       padding: const EdgeInsets.all(6),
@@ -959,7 +973,9 @@ class PagosAlumnoView extends StatelessWidget {
                           }
 
                           if (!snapshot.hasData) {
-                            return const Center(child: CircularProgressIndicator());
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
                           }
                           final docs = snapshot.data!.docs;
                           final List<QueryDocumentSnapshot> deudas = [];
@@ -967,20 +983,30 @@ class PagosAlumnoView extends StatelessWidget {
                           final List<QueryDocumentSnapshot> pagadas = [];
 
                           final ahora = DateTime.now();
-                          final hoy = DateTime(ahora.year, ahora.month, ahora.day);
+                          final hoy = DateTime(
+                            ahora.year,
+                            ahora.month,
+                            ahora.day,
+                          );
 
                           for (final d in docs) {
                             final data = d.data() as Map<String, dynamic>;
-                            final estado = (data["estado"] ?? "pendiente").toString();
+                            final estado = (data["estado"] ?? "pendiente")
+                                .toString();
 
                             DateTime? venc;
                             final ts = data["fechaVencimiento"];
                             if (ts is Timestamp) venc = ts.toDate();
 
                             // si no tienes estado "vencido", lo tratamos como atrasado por fecha
-                            final bool vencidoPorFecha = (estado != "pagado") &&
+                            final bool vencidoPorFecha =
+                                (estado != "pagado") &&
                                 (venc != null) &&
-                                DateTime(venc.year, venc.month, venc.day).isBefore(hoy);
+                                DateTime(
+                                  venc.year,
+                                  venc.month,
+                                  venc.day,
+                                ).isBefore(hoy);
 
                             if (estado == "pagado") {
                               pagadas.add(d);
@@ -1035,11 +1061,11 @@ class _ListaPagos extends StatelessWidget {
     required this.tipo,
   });
 
-  // ✅ Datos BCP (los tuyos)
+  // âœ… Datos BCP (los tuyos)
   static const String bcpCuentaSoles = "21593111196008";
   static const String bcpCci = "00221519311119600829";
 
-  // ✅ QR Yape (ajusta el nombre si tu archivo es distinto)
+  // âœ… QR Yape (ajusta el nombre si tu archivo es distinto)
   static const String yapeQrAsset = "assets/images/Yape.png";
 
   String _fmtFecha(DateTime d) =>
@@ -1053,7 +1079,7 @@ class _ListaPagos extends StatelessWidget {
   }
 
   int _diasMora(DateTime venc) {
-    // Mora por días posteriores al vencimiento (sin contar el día de vencimiento)
+    // Mora por dÃ­as posteriores al vencimiento (sin contar el dÃ­a de vencimiento)
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final due = DateTime(venc.year, venc.month, venc.day);
@@ -1074,7 +1100,10 @@ class _ListaPagos extends StatelessWidget {
       return Center(
         child: Text(
           tituloVacio,
-          style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            color: Colors.black54,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       );
     }
@@ -1097,7 +1126,7 @@ class _ListaPagos extends StatelessWidget {
         final ts = p["fechaVencimiento"];
         if (ts is Timestamp) venc = ts.toDate();
 
-        // ✅ Mora: S/ 5 por día SOLO si NO está pagado y ya pasó el vencimiento
+        // âœ… Mora: S/ 5 por dÃ­a SOLO si NO estÃ¡ pagado y ya pasÃ³ el vencimiento
         int diasMora = 0;
         if (estado != "pagado" && venc != null && _isBeforeToday(venc)) {
           diasMora = _diasMora(venc);
@@ -1105,7 +1134,7 @@ class _ListaPagos extends StatelessWidget {
         final double mora = (estado != "pagado") ? diasMora * 5.0 : 0.0;
         final double montoFinal = montoBase + mora;
 
-        // 🎨 Colores pastel por tipo
+        // ðŸŽ¨ Colores pastel por tipo
         Color bg, border, icon;
         IconData ico;
 
@@ -1160,7 +1189,10 @@ class _ListaPagos extends StatelessWidget {
                     children: [
                       Text(
                         concepto,
-                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 15,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -1173,13 +1205,13 @@ class _ListaPagos extends StatelessWidget {
                       if (mora > 0) ...[
                         const SizedBox(height: 2),
                         Text(
-                          "Incluye mora: $moneda ${_montoTxt(mora)} (${diasMora} día(s) × S/5)",
+                          "Incluye mora: $moneda ${_montoTxt(mora)} (${diasMora} dÃ­a(s) Ã— S/5)",
                           style: const TextStyle(color: Colors.black54),
                         ),
                       ],
                       const SizedBox(height: 2),
                       Text(
-                        "Vence: ${venc == null ? "—" : _fmtFecha(venc)}",
+                        "Vence: ${venc == null ? "â€”" : _fmtFecha(venc)}",
                         style: const TextStyle(color: Colors.black54),
                       ),
                     ],
@@ -1195,12 +1227,12 @@ class _ListaPagos extends StatelessWidget {
     );
   }
 
-  // ✅ POPUP: PAGADA
+  // âœ… POPUP: PAGADA
   void _mostrarPagoPagado(BuildContext context) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("✅ Bien Hecho"),
+        title: const Text("âœ… Bien Hecho"),
         content: const Text("Tu deuda ha sido pagada."),
         actions: [
           TextButton(
@@ -1212,7 +1244,7 @@ class _ListaPagos extends StatelessWidget {
     );
   }
 
-  // ✅ POPUP: PENDIENTE/ATRASADA -> Elegir método (Yape/BCP)
+  // âœ… POPUP: PENDIENTE/ATRASADA -> Elegir mÃ©todo (Yape/BCP)
   void _mostrarOpcionesPago(
     BuildContext context, {
     required String concepto,
@@ -1237,12 +1269,14 @@ class _ListaPagos extends StatelessWidget {
             ),
             if (mora > 0) ...[
               const SizedBox(height: 4),
-              Text("Mora: $moneda ${_montoTxt(mora)} ($diasMora día(s))",
-                  style: const TextStyle(color: Colors.black54)),
+              Text(
+                "Mora: $moneda ${_montoTxt(mora)} ($diasMora dÃ­a(s))",
+                style: const TextStyle(color: Colors.black54),
+              ),
             ],
             const SizedBox(height: 12),
             const Text(
-              "Elige un método de pago de preferencia:",
+              "Elige un mÃ©todo de pago de preferencia:",
               style: TextStyle(fontWeight: FontWeight.w800),
             ),
           ],
@@ -1257,7 +1291,12 @@ class _ListaPagos extends StatelessWidget {
             label: const Text("Yape"),
             onPressed: () {
               Navigator.pop(context);
-              _mostrarYape(context, concepto: concepto, moneda: moneda, montoFinal: montoFinal);
+              _mostrarYape(
+                context,
+                concepto: concepto,
+                moneda: moneda,
+                montoFinal: montoFinal,
+              );
             },
           ),
           ElevatedButton.icon(
@@ -1269,7 +1308,12 @@ class _ListaPagos extends StatelessWidget {
             label: const Text("BCP"),
             onPressed: () {
               Navigator.pop(context);
-              _mostrarBCP(context, concepto: concepto, moneda: moneda, montoFinal: montoFinal);
+              _mostrarBCP(
+                context,
+                concepto: concepto,
+                moneda: moneda,
+                montoFinal: montoFinal,
+              );
             },
           ),
         ],
@@ -1277,7 +1321,7 @@ class _ListaPagos extends StatelessWidget {
     );
   }
 
-  // ✅ Detalle Yape (QR desde assets)
+  // âœ… Detalle Yape (QR desde assets)
   void _mostrarYape(
     BuildContext context, {
     required String concepto,
@@ -1300,15 +1344,11 @@ class _ListaPagos extends StatelessWidget {
             const SizedBox(height: 12),
             ClipRRect(
               borderRadius: BorderRadius.circular(14),
-              child: Image.asset(
-                yapeQrAsset,
-                height: 220,
-                fit: BoxFit.contain,
-              ),
+              child: Image.asset(yapeQrAsset, height: 220, fit: BoxFit.contain),
             ),
             const SizedBox(height: 10),
             const Text(
-              "Escanea el QR y realiza el pago.\nLuego puedes enviar el comprobante a administración.",
+              "Escanea el QR y realiza el pago.\nLuego puedes enviar el comprobante a administraciÃ³n.",
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.black54),
             ),
@@ -1317,7 +1357,7 @@ class _ListaPagos extends StatelessWidget {
         actions: [
           TextButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor:kPrimary,
+              backgroundColor: kPrimary,
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.pop(context),
@@ -1328,7 +1368,7 @@ class _ListaPagos extends StatelessWidget {
     );
   }
 
-  // ✅ Detalle BCP (Cuenta + CCI con copiar)
+  // âœ… Detalle BCP (Cuenta + CCI con copiar)
   void _mostrarBCP(
     BuildContext context, {
     required String concepto,
@@ -1351,7 +1391,10 @@ class _ListaPagos extends StatelessWidget {
             ),
             const SizedBox(height: 14),
 
-            const Text("Cuenta BCP (Soles)", style: TextStyle(fontWeight: FontWeight.w800)),
+            const Text(
+              "Cuenta BCP (Soles)",
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
             const SizedBox(height: 6),
             _copyRow(context, bcpCuentaSoles),
 
@@ -1362,7 +1405,7 @@ class _ListaPagos extends StatelessWidget {
 
             const SizedBox(height: 10),
             const Text(
-              "Realiza la transferencia y guarda tu comprobante.\nLuego envíalo a administración.",
+              "Realiza la transferencia y guarda tu comprobante.\nLuego envÃ­alo a administraciÃ³n.",
               style: TextStyle(color: Colors.black54),
             ),
           ],
@@ -1370,7 +1413,7 @@ class _ListaPagos extends StatelessWidget {
         actions: [
           TextButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor:kPrimary,
+              backgroundColor: kPrimary,
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.pop(context),
@@ -1396,9 +1439,9 @@ class _ListaPagos extends StatelessWidget {
           onPressed: () async {
             await Clipboard.setData(ClipboardData(text: value));
             if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Copiado ✅")),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text("Copiado âœ…")));
             }
           },
           icon: const Icon(Icons.copy),
@@ -1409,7 +1452,6 @@ class _ListaPagos extends StatelessWidget {
 }
 
 enum _PagoTipo { deuda, atrasada, pagada }
-
 
 class PerfilAlumnoView extends StatelessWidget {
   final String alumnoId;
@@ -1436,23 +1478,20 @@ class PerfilAlumnoView extends StatelessWidget {
       }
     }
 
-    return {
-      "asistencias": asistencias,
-      "inasistencias": inasistencias,
-    };
+    return {"asistencias": asistencias, "inasistencias": inasistencias};
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: kPrimary,
+      color: context.appPrimaryBackground,
       child: SafeArea(
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF7FF),
+              color: context.appPanel,
               borderRadius: BorderRadius.circular(18),
             ),
             child: ClipRRect(
@@ -1480,31 +1519,44 @@ class PerfilAlumnoView extends StatelessWidget {
 
                   final data = snapshot.data?.data() as Map<String, dynamic>?;
                   if (data == null) {
-                    return const Center(child: Text("No se encontró el perfil del alumno"));
+                    return const Center(
+                      child: Text("No se encontrÃ³ el perfil del alumno"),
+                    );
                   }
 
                   final nombre = (data["nombre"] ?? "Sin nombre").toString();
-                  final apoderado = (data["apoderado"] ?? "—").toString();
-                  final contacto = (data["contacto"] ?? "—").toString();
+                  final apoderado = (data["apoderado"] ?? "â€”").toString();
+                  final contacto = (data["contacto"] ?? "â€”").toString();
 
                   return FutureBuilder<Map<String, int>>(
                     future: _cargarAsistenciaStats(),
                     builder: (context, statsSnap) {
                       final asistencias = statsSnap.data?["asistencias"] ?? 0;
-                      final inasistencias = statsSnap.data?["inasistencias"] ?? 0;
+                      final inasistencias =
+                          statsSnap.data?["inasistencias"] ?? 0;
 
                       return ListView(
                         padding: const EdgeInsets.all(16),
                         children: [
                           const SizedBox(height: 6),
+                          const Align(
+                            alignment: Alignment.centerRight,
+                            child: ThemeToggleButton(),
+                          ),
+                          const SizedBox(height: 12),
 
                           Text(
                             "Bienvenido alumno, $nombre",
-                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
                           const SizedBox(height: 6),
-                          const Text("Tu Información",
-                              style: TextStyle(color: Colors.black54)),
+                          Text(
+                            "Tu Información",
+                            style: TextStyle(color: context.appMutedText),
+                          ),
 
                           GridView.count(
                             crossAxisCount: 2,
@@ -1519,8 +1571,12 @@ class PerfilAlumnoView extends StatelessWidget {
                                 valor: "$asistencias",
                                 icono: Icons.check_circle,
                                 borderColor: const Color(0xFF4CAF50), // verde
-                                bgColor: const Color(0xFFE8F5E9),     // verde pastel
-                                iconColor: const Color(0xFF2E7D32),   // verde fuerte
+                                bgColor: const Color(
+                                  0xFFE8F5E9,
+                                ), // verde pastel
+                                iconColor: const Color(
+                                  0xFF2E7D32,
+                                ), // verde fuerte
                               ),
                               _StatCard(
                                 titulo: "Inasistencias",
@@ -1535,16 +1591,16 @@ class PerfilAlumnoView extends StatelessWidget {
 
                           const SizedBox(height: 16),
 
-                          // ✅ Tarjeta info personal
+                          // âœ… Tarjeta info personal
                           Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: context.appCard,
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Colors.black.withOpacity(0.06)),
+                              border: Border.all(color: context.appBorder),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.06),
+                                  color: context.appShadow,
                                   blurRadius: 12,
                                   offset: const Offset(0, 6),
                                 ),
@@ -1580,11 +1636,11 @@ class PerfilAlumnoView extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.05),
+                              color: context.appSoftFill,
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: const Text(
-                              "Si algún dato está mal, avisa a administración para que lo actualicen.",
+                              "Si algÃºn dato estÃ¡ mal, avisa a administraciÃ³n para que lo actualicen.",
                               style: TextStyle(fontWeight: FontWeight.w600),
                             ),
                           ),
@@ -1609,21 +1665,21 @@ class InformesAlumnoView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: kPrimary,
+      color: context.appPrimaryBackground,
       child: SafeArea(
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF7FF),
+              color: context.appPanel,
               borderRadius: BorderRadius.circular(18),
             ),
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection("informes")
-                  .where("alumnoId", isEqualTo: alumnoId) // ✅ solo los suyos
-                  .where("estado", isEqualTo: "activo")   // opcional (si lo usas)
+                  .where("alumnoId", isEqualTo: alumnoId) // âœ… solo los suyos
+                  .where("estado", isEqualTo: "activo") // opcional (si lo usas)
                   .orderBy("fecha", descending: true)
                   .snapshots(),
               builder: (context, snap) {
@@ -1646,7 +1702,10 @@ class InformesAlumnoView extends StatelessWidget {
                   return const Center(
                     child: Text(
                       "No tienes informes nuevos",
-                      style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   );
                 }
@@ -1657,7 +1716,10 @@ class InformesAlumnoView extends StatelessWidget {
                     const SizedBox(height: 6),
                     const Text(
                       "Estos son tus informes",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                     const SizedBox(height: 14),
 
@@ -1674,13 +1736,20 @@ class InformesAlumnoView extends StatelessWidget {
                         padding: const EdgeInsets.only(bottom: 12),
                         child: InkWell(
                           borderRadius: BorderRadius.circular(18),
-                          onTap: () => _mostrarDetalleInforme(context, titulo, url, fecha),
+                          onTap: () => _mostrarDetalleInforme(
+                            context,
+                            titulo,
+                            url,
+                            fecha,
+                          ),
                           child: Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(18),
-                              border: Border.all(color: Colors.black.withOpacity(0.06)),
+                              border: Border.all(
+                                color: Colors.black.withOpacity(0.06),
+                              ),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.05),
@@ -1698,28 +1767,41 @@ class InformesAlumnoView extends StatelessWidget {
                                     color: kPrimary.withOpacity(0.12),
                                     borderRadius: BorderRadius.circular(14),
                                   ),
-                                  child: const Icon(Icons.picture_as_pdf, color: kPrimary),
+                                  child: const Icon(
+                                    Icons.picture_as_pdf,
+                                    color: kPrimary,
+                                  ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         titulo,
-                                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 15,
+                                        ),
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
                                         fecha == null
-                                            ? "Fecha: —"
+                                            ? "Fecha: â€”"
                                             : "Fecha: ${fecha.day.toString().padLeft(2, "0")}/${fecha.month.toString().padLeft(2, "0")}/${fecha.year}",
-                                        style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.w600),
+                                        style: const TextStyle(
+                                          color: Colors.black54,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                const Icon(Icons.chevron_right, color: Colors.black54),
+                                const Icon(
+                                  Icons.chevron_right,
+                                  color: Colors.black54,
+                                ),
                               ],
                             ),
                           ),
@@ -1753,12 +1835,12 @@ class InformesAlumnoView extends StatelessWidget {
             children: [
               Text(
                 fecha == null
-                    ? "Fecha: —"
+                    ? "Fecha: â€”"
                     : "Fecha: ${fecha.day.toString().padLeft(2, "0")}/${fecha.month.toString().padLeft(2, "0")}/${fecha.year}",
               ),
               const SizedBox(height: 10),
               const Text(
-                "Este informe está en PDF. Presiona el botón para abrirlo.",
+                "Este informe estÃ¡ en PDF. Presiona el botÃ³n para abrirlo.",
                 style: TextStyle(color: Colors.black54),
               ),
             ],
@@ -1800,17 +1882,17 @@ class InformesAlumnoView extends StatelessWidget {
 
     final uri = Uri.tryParse(url);
     if (uri == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Link inválido")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Link invÃ¡lido")));
       return;
     }
 
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No se pudo abrir el PDF")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("No se pudo abrir el PDF")));
     }
   }
 }
@@ -1834,10 +1916,14 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cardColor = context.isDarkMode
+        ? Color.alphaBlend(borderColor.withOpacity(0.18), context.appCard)
+        : bgColor;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: bgColor,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor, width: 1.5),
       ),
@@ -1848,16 +1934,10 @@ class _StatCard extends StatelessWidget {
           const Spacer(),
           Text(
             valor,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-            ),
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 2),
-          Text(
-            titulo,
-            style: const TextStyle(color: Colors.black54),
-          ),
+          Text(titulo, style: TextStyle(color: context.appMutedText)),
         ],
       ),
     );
@@ -1888,9 +1968,9 @@ class _PerfilInfoRow extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: Colors.black54,
+                  color: context.appMutedText,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1941,12 +2021,12 @@ class AppHeader extends StatelessWidget {
                     color: Colors.black.withOpacity(0.18),
                     blurRadius: 14,
                     offset: const Offset(0, 6),
-                  )
+                  ),
                 ],
               ),
               child: Image.asset(
                 "assets/images/logo.png",
-                height: 44, // ✅ logo grande
+                height: 44, // âœ… logo grande
                 fit: BoxFit.contain,
               ),
             ),

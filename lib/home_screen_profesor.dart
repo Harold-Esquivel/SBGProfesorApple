@@ -4,17 +4,24 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sbg_profesores/widgets/classcard.dart';
 import 'package:sbg_profesores/theme/app_colors.dart';
+import 'package:sbg_profesores/theme/app_theme.dart';
 import 'package:sbg_profesores/widgets/animated_role_button.dart';
 import 'package:sbg_profesores/views/perfil_view.dart';
 import 'package:sbg_profesores/services/auth_navigation_service.dart';
+import 'package:sbg_profesores/widgets/liquid_glass_bottom_nav.dart';
 
 int _durToMin(String d) {
   switch (d) {
-    case "45": return 45;
-    case "60": return 60;
-    case "90": return 90;
-    case "120": return 120;
-    default: return 60;
+    case "45":
+      return 45;
+    case "60":
+      return 60;
+    case "90":
+      return 90;
+    case "120":
+      return 120;
+    default:
+      return 60;
   }
 }
 
@@ -25,14 +32,17 @@ TimeOfDay _addMinutes(TimeOfDay t, int minutes) {
   return TimeOfDay(hour: h, minute: m);
 }
 
-Future<String?> _pickDuracion(BuildContext context, {required String actual}) async {
+Future<String?> _pickDuracion(
+  BuildContext context, {
+  required String actual,
+}) async {
   const opciones = ["45", "60", "90", "120"];
 
   return showDialog<String>(
     context: context,
     builder: (_) {
       return AlertDialog(
-        title: const Text("Elige duración"),
+        title: const Text("Elige duraciÃ³n"),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: opciones.map((v) {
@@ -62,8 +72,7 @@ Future<T?> showPopDialog<T>({
   required BuildContext context,
   required Widget child,
   bool dismissible = true,
-}) 
-{
+}) {
   return showGeneralDialog<T>(
     context: context,
     barrierDismissible: dismissible,
@@ -71,9 +80,7 @@ Future<T?> showPopDialog<T>({
     barrierColor: Colors.black.withValues(),
     transitionDuration: const Duration(milliseconds: 300),
     pageBuilder: (_, _, _) {
-      return SafeArea(
-        child: Center(child: child),
-      );
+      return SafeArea(child: Center(child: child));
     },
     transitionBuilder: (_, anim, _, widget) {
       final curved = CurvedAnimation(parent: anim, curve: Curves.easeOutBack);
@@ -95,369 +102,419 @@ class NotificacionesProfesorView extends StatelessWidget {
   const NotificacionesProfesorView({super.key, required this.profesorId});
 
   Widget _fila(String t, String v) {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 6),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 72,
-          child: Text("$t:", style: const TextStyle(fontWeight: FontWeight.w600)),
-        ),
-        Expanded(child: Text(v)),
-      ],
-    ),
-  );
-}
-
-TimeOfDay _parseHora(String hhmm) {
-  try {
-    final parts = hhmm.split(":");
-    final h = int.parse(parts[0]);
-    final m = int.parse(parts[1]);
-    return TimeOfDay(hour: h, minute: m);
-  } catch (_) {
-    return const TimeOfDay(hour: 8, minute: 0);
-  }
-}
-
-  void _rechazarConMotivo(BuildContext context, QueryDocumentSnapshot solicitud) {
-  final motivoCtrl = TextEditingController();
-
-  showDialog(
-    context: context,
-    builder: (_) {
-      return AlertDialog(
-        title: const Text("Motivo de rechazo"),
-        content: TextField(
-          controller: motivoCtrl,
-          maxLines: 4,
-          decoration: const InputDecoration(
-            hintText: "Ej: Ese día no estoy disponible / horario ocupado / etc.",
-          ),
-        ),
-        actions: [
-          TextButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor:kPrimary,
-              foregroundColor: Colors.white,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 72,
+            child: Text(
+              "$t:",
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Volver"),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.white,
-              backgroundColor: Colors.red),
-            onPressed: () async {
-              final motivo = motivoCtrl.text.trim();
-
-              await solicitud.reference.update({
-                "estado": "rechazada",
-                "motivoRechazo": motivo,
-                "respondedAt": Timestamp.now(),
-              });
-
-              if (context.mounted) Navigator.pop(context);
-
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Solicitud rechazada ❌")),
-                );
-              }
-            },
-            child: const Text("Enviar y rechazar"),
-          ),
+          Expanded(child: Text(v)),
         ],
-      );
-    },
-  );
-}
+      ),
+    );
+  }
+
+  TimeOfDay _parseHora(String hhmm) {
+    try {
+      final parts = hhmm.split(":");
+      final h = int.parse(parts[0]);
+      final m = int.parse(parts[1]);
+      return TimeOfDay(hour: h, minute: m);
+    } catch (_) {
+      return const TimeOfDay(hour: 8, minute: 0);
+    }
+  }
+
+  void _rechazarConMotivo(
+    BuildContext context,
+    QueryDocumentSnapshot solicitud,
+  ) {
+    final motivoCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text("Motivo de rechazo"),
+          content: TextField(
+            controller: motivoCtrl,
+            maxLines: 4,
+            decoration: const InputDecoration(
+              hintText:
+                  "Ej: Ese dÃ­a no estoy disponible / horario ocupado / etc.",
+            ),
+          ),
+          actions: [
+            TextButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kPrimary,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Volver"),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.red,
+              ),
+              onPressed: () async {
+                final motivo = motivoCtrl.text.trim();
+
+                await solicitud.reference.update({
+                  "estado": "rechazada",
+                  "motivoRechazo": motivo,
+                  "respondedAt": Timestamp.now(),
+                });
+
+                if (context.mounted) Navigator.pop(context);
+
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Solicitud rechazada âŒ")),
+                  );
+                }
+              },
+              child: const Text("Enviar y rechazar"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _abrirDetalleSolicitud(
-  BuildContext context,
-  QueryDocumentSnapshot solicitud,
-  String profesorId,
-) async {
-  final data = solicitud.data() as Map<String, dynamic>;
+    BuildContext context,
+    QueryDocumentSnapshot solicitud,
+    String profesorId,
+  ) async {
+    final data = solicitud.data() as Map<String, dynamic>;
 
-  final alumnoNombre = (data["alumnoNombre"] ?? "Alumno").toString();
-  final alumnoId = (data["alumnoId"] ?? "").toString();
+    final alumnoNombre = (data["alumnoNombre"] ?? "Alumno").toString();
+    final alumnoId = (data["alumnoId"] ?? "").toString();
 
-  final materia = (data["materia"] ?? "Materia").toString();
-  final mensaje = (data["mensaje"] ?? "").toString();
+    final materia = (data["materia"] ?? "Materia").toString();
+    final mensaje = (data["mensaje"] ?? "").toString();
 
-  DateTime fecha = DateTime.now();
-  final ts = data["fecha"];
-  if (ts is Timestamp) fecha = ts.toDate();
+    DateTime fecha = DateTime.now();
+    final ts = data["fecha"];
+    if (ts is Timestamp) fecha = ts.toDate();
 
-  // ✅ Hora inicio desde solicitud
-  TimeOfDay horaIni = _parseHora(data["horaInicio"]?.toString() ?? "08:00");
+    // âœ… Hora inicio desde solicitud
+    TimeOfDay horaIni = _parseHora(data["horaInicio"]?.toString() ?? "08:00");
 
-  // ✅ Duración (si ya la guardas en solicitudes, la usa; si no, default 60)
-  String duracion = "60";
-  final durMinDb = data["duracionMin"];
-  if (durMinDb is int) duracion = durMinDb.toString();
+    // âœ… DuraciÃ³n (si ya la guardas en solicitudes, la usa; si no, default 60)
+    String duracion = "60";
+    final durMinDb = data["duracionMin"];
+    if (durMinDb is int) duracion = durMinDb.toString();
 
-  String tipoClase = (data["tipoClase"] ?? "presencial").toString();
+    String tipoClase = (data["tipoClase"] ?? "presencial").toString();
 
-  String txtFecha() =>
-      "${fecha.day.toString().padLeft(2, "0")}/${fecha.month.toString().padLeft(2, "0")}/${fecha.year}";
+    String txtFecha() =>
+        "${fecha.day.toString().padLeft(2, "0")}/${fecha.month.toString().padLeft(2, "0")}/${fecha.year}";
 
-  String txtHora(TimeOfDay t) =>
-      "${t.hour.toString().padLeft(2, "0")}:${t.minute.toString().padLeft(2, "0")}";
+    String txtHora(TimeOfDay t) =>
+        "${t.hour.toString().padLeft(2, "0")}:${t.minute.toString().padLeft(2, "0")}";
 
-  showDialog(
-    context: context,
-    barrierDismissible: true,
-    builder: (_) {
-      return Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        child: StatefulBuilder(
-          builder: (context, setModalState) {
-            // ✅ calcular hora fin automático según duración
-            final minutos = _durToMin(duracion);
-            final horaFinCalc = _addMinutes(horaIni, minutos);
-            final textoFin = txtHora(horaFinCalc);
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: StatefulBuilder(
+            builder: (context, setModalState) {
+              // âœ… calcular hora fin automÃ¡tico segÃºn duraciÃ³n
+              final minutos = _durToMin(duracion);
+              final horaFinCalc = _addMinutes(horaIni, minutos);
+              final textoFin = txtHora(horaFinCalc);
 
-            return Padding(
-              padding: const EdgeInsets.all(16),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text(
-                      "Detalle de solicitud",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 14),
-
-                    _fila("Materia", materia),
-                    _fila("Alumno", alumnoNombre),
-                    if (mensaje.isNotEmpty) _fila("Mensaje", mensaje),
-
-                    const SizedBox(height: 12),
-                    const Divider(),
-
-                    // Fecha
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text("Fecha: ${txtFecha()}"),
-                        TextButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: kPrimary,
-                            foregroundColor: Colors.white,
-                          ),
-                          onPressed: () async {
-                            final picked = await showDatePicker(
-                              context: context,
-                              initialDate: fecha,
-                              firstDate: DateTime(2023),
-                              lastDate: DateTime(2035),
-                            );
-                            if (picked != null) setModalState(() => fecha = picked);
-                          },
-                          child: const Text("Cambiar"),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    // ✅ Hora inicio
-                    InkWell(
-                      onTap: () async {
-                        final picked = await mostrarPickerHoraIOS(context, inicial: horaIni);
-                        if (picked != null) setModalState(() => horaIni = picked);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade900,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.access_time, color: Colors.white),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                "Hora inicio: ${txtHora(horaIni)}",
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ),
-                            const Icon(Icons.keyboard_arrow_down, color: Colors.white70),
-                          ],
+              return Padding(
+                padding: const EdgeInsets.all(16),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        "Detalle de solicitud",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 14),
 
-                    const SizedBox(height: 10),
+                      _fila("Materia", materia),
+                      _fila("Alumno", alumnoNombre),
+                      if (mensaje.isNotEmpty) _fila("Mensaje", mensaje),
 
-                    // ✅ Duración (cuadro clickeable)
-                    InkWell(
-                      onTap: () async {
-                        final picked = await _pickDuracion(context, actual: duracion);
-                        if (picked != null) setModalState(() => duracion = picked);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade900,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.timer, color: Colors.white),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                "Duración: $duracion min",
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ),
-                            const Icon(Icons.keyboard_arrow_down, color: Colors.white70),
-                          ],
-                        ),
-                      ),
-                    ),
+                      const SizedBox(height: 12),
+                      const Divider(),
 
-                    const SizedBox(height: 12),
-
-                    // Tipo (presencial/virtual)
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
+                      // Fecha
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          ChoiceChip(
-                            label: const Text("Presencial"),
-                            selected: tipoClase == "presencial",
-                            selectedColor: kPrimary,
-                            backgroundColor: Colors.grey.shade800,
-                            labelStyle: const TextStyle(color: Colors.white),
-                            onSelected: (_) => setModalState(() => tipoClase = "presencial"),
-                          ),
-                          ChoiceChip(
-                            label: const Text("Virtual"),
-                            selected: tipoClase == "virtual",
-                            selectedColor: kPrimary,
-                            backgroundColor: Colors.grey.shade800,
-                            labelStyle: const TextStyle(color: Colors.white),
-                            onSelected: (_) => setModalState(() => tipoClase = "virtual"),
+                          Text("Fecha: ${txtFecha()}"),
+                          TextButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: kPrimary,
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: fecha,
+                                firstDate: DateTime(2023),
+                                lastDate: DateTime(2035),
+                              );
+                              if (picked != null)
+                                setModalState(() => fecha = picked);
+                            },
+                            child: const Text("Cambiar"),
                           ),
                         ],
                       ),
-                    ),
 
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 10),
 
-                    // ✅ ACEPTAR
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      icon: const Icon(Icons.check),
-                      label: const Text("Aceptar y crear clase"),
-                      onPressed: () async {
-                        // ✅ bloqueo si pasa al día siguiente (opcional, recomendado)
-                        final iniMin = horaIni.hour * 60 + horaIni.minute;
-                        if (iniMin + minutos >= 24 * 60) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("La duración pasa al día siguiente. Elige otra hora.")),
+                      // âœ… Hora inicio
+                      InkWell(
+                        onTap: () async {
+                          final picked = await mostrarPickerHoraIOS(
+                            context,
+                            inicial: horaIni,
                           );
-                          return;
-                        }
-
-                        final batch = FirebaseFirestore.instance.batch();
-
-                        // 1) Marcar solicitud aceptada + guardar edición profe
-                        batch.update(solicitud.reference, {
-                          "estado": "aceptada",
-                          "fecha": Timestamp.fromDate(fecha),
-                          "horaInicio": txtHora(horaIni),
-                          "horaFin": textoFin, // ✅ calculada
-                          "duracionMin": minutos, // ✅ guardamos duración
-                          "tipoClase": tipoClase,
-                          "respondedAt": Timestamp.now(),
-                        });
-
-                        // 2) Crear clase
-                        final claseRef = FirebaseFirestore.instance.collection("clases").doc();
-                        batch.set(claseRef, {
-                          "materia": materia,
-                          "fecha": Timestamp.fromDate(fecha),
-                          "horaInicio": txtHora(horaIni),
-                          "horaFin": textoFin, // ✅ calculada
-                          "duracionMin": minutos, // ✅
-                          "tipoClase": tipoClase,
-                          "profesorId": profesorId,
-                          "alumnosId": [alumnoId],
-                          "asistieron": [],
-                          "estado": "activa",
-                          "createdAt": Timestamp.now(),
-                          "solicitudId": solicitud.id,
-                        });
-
-                        await batch.commit();
-
-                        if (context.mounted) Navigator.pop(context);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Clase creada ✅")),
-                          );
-                        }
-                      },
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    // RECHAZAR con motivo
-                    OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          if (picked != null)
+                            setModalState(() => horaIni = picked);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade900,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.access_time,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  "Hora inicio: ${txtHora(horaIni)}",
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              ),
+                              const Icon(
+                                Icons.keyboard_arrow_down,
+                                color: Colors.white70,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      icon: const Icon(Icons.close),
-                      label: const Text("Rechazar (con motivo)"),
-                      onPressed: () async {
-                        Navigator.pop(context);
-                        _rechazarConMotivo(context, solicitud);
-                      },
-                    ),
-                  ],
+
+                      const SizedBox(height: 10),
+
+                      // âœ… DuraciÃ³n (cuadro clickeable)
+                      InkWell(
+                        onTap: () async {
+                          final picked = await _pickDuracion(
+                            context,
+                            actual: duracion,
+                          );
+                          if (picked != null)
+                            setModalState(() => duracion = picked);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade900,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.timer, color: Colors.white),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  "DuraciÃ³n: $duracion min",
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              ),
+                              const Icon(
+                                Icons.keyboard_arrow_down,
+                                color: Colors.white70,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // Tipo (presencial/virtual)
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            ChoiceChip(
+                              label: const Text("Presencial"),
+                              selected: tipoClase == "presencial",
+                              selectedColor: kPrimary,
+                              backgroundColor: Colors.grey.shade800,
+                              labelStyle: const TextStyle(color: Colors.white),
+                              onSelected: (_) =>
+                                  setModalState(() => tipoClase = "presencial"),
+                            ),
+                            ChoiceChip(
+                              label: const Text("Virtual"),
+                              selected: tipoClase == "virtual",
+                              selectedColor: kPrimary,
+                              backgroundColor: Colors.grey.shade800,
+                              labelStyle: const TextStyle(color: Colors.white),
+                              onSelected: (_) =>
+                                  setModalState(() => tipoClase = "virtual"),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // âœ… ACEPTAR
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(Icons.check),
+                        label: const Text("Aceptar y crear clase"),
+                        onPressed: () async {
+                          // âœ… bloqueo si pasa al dÃ­a siguiente (opcional, recomendado)
+                          final iniMin = horaIni.hour * 60 + horaIni.minute;
+                          if (iniMin + minutos >= 24 * 60) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  "La duraciÃ³n pasa al dÃ­a siguiente. Elige otra hora.",
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+
+                          final batch = FirebaseFirestore.instance.batch();
+
+                          // 1) Marcar solicitud aceptada + guardar ediciÃ³n profe
+                          batch.update(solicitud.reference, {
+                            "estado": "aceptada",
+                            "fecha": Timestamp.fromDate(fecha),
+                            "horaInicio": txtHora(horaIni),
+                            "horaFin": textoFin, // âœ… calculada
+                            "duracionMin": minutos, // âœ… guardamos duraciÃ³n
+                            "tipoClase": tipoClase,
+                            "respondedAt": Timestamp.now(),
+                          });
+
+                          // 2) Crear clase
+                          final claseRef = FirebaseFirestore.instance
+                              .collection("clases")
+                              .doc();
+                          batch.set(claseRef, {
+                            "materia": materia,
+                            "fecha": Timestamp.fromDate(fecha),
+                            "horaInicio": txtHora(horaIni),
+                            "horaFin": textoFin, // âœ… calculada
+                            "duracionMin": minutos, // âœ…
+                            "tipoClase": tipoClase,
+                            "profesorId": profesorId,
+                            "alumnosId": [alumnoId],
+                            "asistieron": [],
+                            "estado": "activa",
+                            "createdAt": Timestamp.now(),
+                            "solicitudId": solicitud.id,
+                          });
+
+                          await batch.commit();
+
+                          if (context.mounted) Navigator.pop(context);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("Clase creada âœ…")),
+                            );
+                          }
+                        },
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // RECHAZAR con motivo
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(Icons.close),
+                        label: const Text("Rechazar (con motivo)"),
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          _rechazarConMotivo(context, solicitud);
+                        },
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
-        ),
-      );
-    },
-  );
-}
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: kPrimary,
+      color: context.appPrimaryBackground,
       child: SafeArea(
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 0, 14, 6),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF7FF),
+              color: context.appPanel,
               borderRadius: BorderRadius.circular(18),
             ),
             child: ClipRRect(
@@ -504,70 +561,91 @@ TimeOfDay _parseHora(String hhmm) {
                       final s = docs[i];
                       final data = s.data() as Map<String, dynamic>;
 
-                      final alumnoNombre = (data["alumnoNombre"] ?? "Alumno").toString();
+                      final alumnoNombre = (data["alumnoNombre"] ?? "Alumno")
+                          .toString();
                       final materia = (data["materia"] ?? "Materia").toString();
                       final mensaje = (data["mensaje"] ?? "").toString();
 
                       return InkWell(
-  borderRadius: BorderRadius.circular(16),
-  onTap: () => _abrirDetalleSolicitud(context, s, profesorId),
-  child: Container(
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          materia,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 6),
-        Text("Alumno: $alumnoNombre"),
-        if (mensaje.isNotEmpty) ...[
-          const SizedBox(height: 6),
-          Text("Mensaje: $mensaje", style: const TextStyle(color: Colors.black54)),
-        ],
-        const SizedBox(height: 12),
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () =>
+                            _abrirDetalleSolicitud(context, s, profesorId),
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                materia,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text("Alumno: $alumnoNombre"),
+                              if (mensaje.isNotEmpty) ...[
+                                const SizedBox(height: 6),
+                                Text(
+                                  "Mensaje: $mensaje",
+                                  style: const TextStyle(color: Colors.black54),
+                                ),
+                              ],
+                              const SizedBox(height: 12),
 
-        Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                icon: const Icon(Icons.check),
-                label: const Text("Aceptar"),
-                onPressed: () async {
-                  // si quieres, aquí también podrías abrir el detalle
-                  _abrirDetalleSolicitud(context, s, profesorId);
-                },
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                icon: const Icon(Icons.close),
-                label: const Text("Rechazar"),
-                onPressed: () => _rechazarConMotivo(context, s),
-              ),
-            ),
-          ],
-        ),
-      ],
-    ),
-  ),
-);
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.green,
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
+                                      icon: const Icon(Icons.check),
+                                      label: const Text("Aceptar"),
+                                      onPressed: () async {
+                                        // si quieres, aquÃ­ tambiÃ©n podrÃ­as abrir el detalle
+                                        _abrirDetalleSolicitud(
+                                          context,
+                                          s,
+                                          profesorId,
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      style: OutlinedButton.styleFrom(
+                                        backgroundColor: Colors.red,
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
+                                      icon: const Icon(Icons.close),
+                                      label: const Text("Rechazar"),
+                                      onPressed: () =>
+                                          _rechazarConMotivo(context, s),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
                     },
                   );
                 },
@@ -594,14 +672,14 @@ class PerfilProfesorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: kPrimary,
+      color: context.appPrimaryBackground,
       child: SafeArea(
         top: false, // porque tu AppHeader ya usa SafeArea arriba
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF7FF),
+              color: context.appPanel,
               borderRadius: BorderRadius.circular(18),
             ),
             child: ClipRRect(
@@ -636,7 +714,8 @@ class _ContenidoPerfilProfesor extends StatelessWidget {
     return StreamBuilder<DocumentSnapshot>(
       stream: profeDocStream,
       builder: (context, profSnap) {
-        final nombre = (profSnap.data?.data() as Map<String, dynamic>?)?["nombre"]
+        final nombre =
+            (profSnap.data?.data() as Map<String, dynamic>?)?["nombre"]
                 ?.toString() ??
             "Profesor";
 
@@ -663,21 +742,32 @@ class _ContenidoPerfilProfesor extends StatelessWidget {
               final estado = (d["estado"] ?? "activa").toString();
               final tipo = (d["tipoClase"] ?? "presencial").toString();
 
-              if (estado == "hecha") hechas++;
-              else if (estado == "cancelada") canceladas++;
-              else if (estado == "reprogramada") reprogramadas++;
-              else activas++;
+              if (estado == "hecha")
+                hechas++;
+              else if (estado == "cancelada")
+                canceladas++;
+              else if (estado == "reprogramada")
+                reprogramadas++;
+              else
+                activas++;
 
-              if (tipo == "virtual") virtuales++;
-              else presenciales++;
+              if (tipo == "virtual")
+                virtuales++;
+              else
+                presenciales++;
             }
 
             return ListView(
               padding: const EdgeInsets.all(16),
               children: [
                 const SizedBox(height: 6),
+                const Align(
+                  alignment: Alignment.centerRight,
+                  child: ThemeToggleButton(),
+                ),
+                const SizedBox(height: 12),
 
-                // ✅ BIENVENIDA
+                // âœ… BIENVENIDA
                 Text(
                   "Bienvenido profesor, $nombre",
                   style: const TextStyle(
@@ -686,12 +776,12 @@ class _ContenidoPerfilProfesor extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   "Tu resumen/estadistica de clases",
-                  style: TextStyle(color: Colors.black54),
+                  style: TextStyle(color: context.appMutedText),
                 ),
 
-                // ✅ TARJETAS (2 columnas)
+                // âœ… TARJETAS (2 columnas)
                 GridView.count(
                   crossAxisCount: 2,
                   shrinkWrap: true,
@@ -759,10 +849,9 @@ class _ContenidoPerfilProfesor extends StatelessWidget {
                   ],
                 ),
 
-
                 const SizedBox(height: 18),
 
-                // ✅ BLOQUE EXTRA (opcional)
+                // âœ… BLOQUE EXTRA (opcional)
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
@@ -770,7 +859,7 @@ class _ContenidoPerfilProfesor extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: const Text(
-                    "Tip: Mantén tus clases hechas al día para que el historial quede ordenado ✅",
+                    "Tip: MantÃ©n tus clases hechas al dÃ­a para que el historial quede ordenado âœ…",
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -802,10 +891,14 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cardColor = context.isDarkMode
+        ? Color.alphaBlend(borderColor.withOpacity(0.18), context.appCard)
+        : bgColor;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: bgColor,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor, width: 1.5),
       ),
@@ -816,16 +909,10 @@ class _StatCard extends StatelessWidget {
           const Spacer(),
           Text(
             valor,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-            ),
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 2),
-          Text(
-            titulo,
-            style: const TextStyle(color: Colors.black54),
-          ),
+          Text(titulo, style: TextStyle(color: context.appMutedText)),
         ],
       ),
     );
@@ -833,117 +920,149 @@ class _StatCard extends StatelessWidget {
 }
 
 class HorarioView extends StatelessWidget {
-  
   Widget _contenidoHorario(BuildContext context) {
-  DateTime inicioSemana =
-      semanaActual.subtract(Duration(days: semanaActual.weekday - 1));
-  inicioSemana = DateTime(inicioSemana.year, inicioSemana.month, inicioSemana.day);
-  final siguienteSemana = inicioSemana.add(const Duration(days: 7));
+    DateTime inicioSemana = semanaActual.subtract(
+      Duration(days: semanaActual.weekday - 1),
+    );
+    inicioSemana = DateTime(
+      inicioSemana.year,
+      inicioSemana.month,
+      inicioSemana.day,
+    );
+    final siguienteSemana = inicioSemana.add(const Duration(days: 7));
 
-  return Column(
-    children: [
-      const SizedBox(height: 10),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back_ios),
-            onPressed: () =>
-                onSemanaChange(semanaActual.subtract(const Duration(days: 7)), -1),
-          ),
-          Text("Semana ${_numeroSemana(semanaActual)}"),
-          IconButton(
-            icon: const Icon(Icons.arrow_forward_ios),
-            onPressed: () =>
-                onSemanaChange(semanaActual.add(const Duration(days: 7)), 1),
-          ),
-        ],
-      ),
+    return Column(
+      children: [
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back_ios),
+              onPressed: () => onSemanaChange(
+                semanaActual.subtract(const Duration(days: 7)),
+                -1,
+              ),
+            ),
+            Text("Semana ${_numeroSemana(semanaActual)}"),
+            IconButton(
+              icon: const Icon(Icons.arrow_forward_ios),
+              onPressed: () =>
+                  onSemanaChange(semanaActual.add(const Duration(days: 7)), 1),
+            ),
+          ],
+        ),
 
-      Expanded(
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 400),
-          child: StreamBuilder<QuerySnapshot>(
-            key: ValueKey(inicioSemana),
-            stream: FirebaseFirestore.instance
-                .collection("clases")
-                .where("profesorId", isEqualTo: profesorId)
-                .where("fecha", isGreaterThanOrEqualTo: Timestamp.fromDate(inicioSemana))
-                .where("fecha", isLessThan: Timestamp.fromDate(siguienteSemana))
-                .orderBy("fecha")
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator());
-              }
+        Expanded(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 400),
+            child: StreamBuilder<QuerySnapshot>(
+              key: ValueKey(inicioSemana),
+              stream: FirebaseFirestore.instance
+                  .collection("clases")
+                  .where("profesorId", isEqualTo: profesorId)
+                  .where(
+                    "fecha",
+                    isGreaterThanOrEqualTo: Timestamp.fromDate(inicioSemana),
+                  )
+                  .where(
+                    "fecha",
+                    isLessThan: Timestamp.fromDate(siguienteSemana),
+                  )
+                  .orderBy("fecha")
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-              final clases = snapshot.data!.docs;
+                final clases = snapshot.data!.docs;
 
-              final clasesPorDia = <String, List<QueryDocumentSnapshot>>{
-                "Lunes": [],
-                "Martes": [],
-                "Miércoles": [],
-                "Jueves": [],
-                "Viernes": [],
-                "Sábado": [],
-                "Domingo": [],
-              };
+                final clasesPorDia = <String, List<QueryDocumentSnapshot>>{
+                  "Lunes": [],
+                  "Martes": [],
+                  "MiÃ©rcoles": [],
+                  "Jueves": [],
+                  "Viernes": [],
+                  "SÃ¡bado": [],
+                  "Domingo": [],
+                };
 
-              for (final clase in clases) {
-                final fecha = (clase["fecha"] as Timestamp).toDate();
-                const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
-                clasesPorDia[dias[fecha.weekday - 1]]!.add(clase);
-              }
+                for (final clase in clases) {
+                  final fecha = (clase["fecha"] as Timestamp).toDate();
+                  const dias = [
+                    "Lunes",
+                    "Martes",
+                    "MiÃ©rcoles",
+                    "Jueves",
+                    "Viernes",
+                    "SÃ¡bado",
+                    "Domingo",
+                  ];
+                  clasesPorDia[dias[fecha.weekday - 1]]!.add(clase);
+                }
 
-              return ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                children: clasesPorDia.entries.map((entry) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 16),
-                      Text(
-                        entry.key.toUpperCase(),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-
-                      ...entry.value.map((clase) {
-                        final data = clase.data() as Map<String, dynamic>;
-                        final horaInicio = data["horaInicio"]?.toString() ?? "";
-                        final horaFin = data["horaFin"]?.toString() ?? "";
-                        final materia = data["materia"]?.toString() ?? "Sin materia";
-                        final estado = data["estado"]?.toString() ?? "activa";
-                        final tipoClase = data["tipoClase"]?.toString() ?? "presencial";
-
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: GestureDetector(
-                            onTap: () => _mostrarOpcionesClase(context, clase),
-                            child: ClaseCard(
-                              hora: (horaInicio.isNotEmpty && horaFin.isNotEmpty) ? "$horaInicio - $horaFin" : "Hora no definida",
-                              materia: materia,
-                              profesor: "Tú",
-                              estado: estado,
-                              tipoClase: tipoClase,
-                            ),
+                return ListView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
+                  children: clasesPorDia.entries.map((entry) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 16),
+                        Text(
+                          entry.key.toUpperCase(),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
                           ),
-                        );
-                      }),
-                    ],
-                  );
-                }).toList(),
-              );
-            },
+                        ),
+                        const SizedBox(height: 10),
+
+                        ...entry.value.map((clase) {
+                          final data = clase.data() as Map<String, dynamic>;
+                          final horaInicio =
+                              data["horaInicio"]?.toString() ?? "";
+                          final horaFin = data["horaFin"]?.toString() ?? "";
+                          final materia =
+                              data["materia"]?.toString() ?? "Sin materia";
+                          final estado = data["estado"]?.toString() ?? "activa";
+                          final tipoClase =
+                              data["tipoClase"]?.toString() ?? "presencial";
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: GestureDetector(
+                              onTap: () =>
+                                  _mostrarOpcionesClase(context, clase),
+                              child: ClaseCard(
+                                hora:
+                                    (horaInicio.isNotEmpty &&
+                                        horaFin.isNotEmpty)
+                                    ? "$horaInicio - $horaFin"
+                                    : "Hora no definida",
+                                materia: materia,
+                                profesor: "TÃº",
+                                estado: estado,
+                                tipoClase: tipoClase,
+                              ),
+                            ),
+                          );
+                        }),
+                      ],
+                    );
+                  }).toList(),
+                );
+              },
+            ),
           ),
         ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
+
   final String profesorId;
   final DateTime semanaActual;
   final int direccionAnimacion;
@@ -958,31 +1077,32 @@ class HorarioView extends StatelessWidget {
   });
 
   @override
-@override
-
-@override
-Widget build(BuildContext context) {
-  return Container(
-    color: kPrimary,
-    child: SafeArea(
-      top: false, // ✅ porque el header ya tiene SafeArea
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 0, 14, 6), // ✅ más largo (menos padding)
-        child: Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFF7FF),
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: _contenidoHorario(context),
+  Widget build(BuildContext context) {
+    return Container(
+      color: context.appPrimaryBackground,
+      child: SafeArea(
+        top: false, // âœ… porque el header ya tiene SafeArea
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            14,
+            0,
+            14,
+            6,
+          ), // âœ… mÃ¡s largo (menos padding)
+          child: Container(
+            decoration: BoxDecoration(
+              color: context.appPanel,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: _contenidoHorario(context),
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   static int _numeroSemana(DateTime fecha) {
     final inicioAnio = DateTime(fecha.year, 1, 1);
@@ -992,135 +1112,146 @@ Widget build(BuildContext context) {
 
   /// Opciones de clase
 
-void _mostrarOpcionesClase(BuildContext context, QueryDocumentSnapshot clase) {
-  final data = clase.data() as Map<String, dynamic>;
+  void _mostrarOpcionesClase(
+    BuildContext context,
+    QueryDocumentSnapshot clase,
+  ) {
+    final data = clase.data() as Map<String, dynamic>;
 
-  final materia = (data["materia"] ?? "Sin materia").toString();
-  final horaInicio = (data["horaInicio"] ?? "--:--").toString();
-  final horaFin = (data["horaFin"] ?? "--:--").toString();
-  final estado = (data["estado"] ?? "activa").toString();
-  
+    final materia = (data["materia"] ?? "Sin materia").toString();
+    final horaInicio = (data["horaInicio"] ?? "--:--").toString();
+    final horaFin = (data["horaFin"] ?? "--:--").toString();
+    final estado = (data["estado"] ?? "activa").toString();
 
-  final tipo = (data["tipoClase"] ?? "presencial").toString(); // presencial | virtual
-  final bool bloqueada = (estado == "hecha" || estado == "cancelada");
+    final tipo = (data["tipoClase"] ?? "presencial")
+        .toString(); // presencial | virtual
+    final bool bloqueada = (estado == "hecha" || estado == "cancelada");
 
-  DateTime? fecha;
-  final f = data["fecha"];
-  if (f is Timestamp) fecha = f.toDate();
+    DateTime? fecha;
+    final f = data["fecha"];
+    if (f is Timestamp) fecha = f.toDate();
 
-  final fechaTxt = (fecha == null)
-      ? "Sin fecha"
-      : "${fecha.day.toString().padLeft(2, "0")}/${fecha.month.toString().padLeft(2, "0")}/${fecha.year}";
+    final fechaTxt = (fecha == null)
+        ? "Sin fecha"
+        : "${fecha.day.toString().padLeft(2, "0")}/${fecha.month.toString().padLeft(2, "0")}/${fecha.year}";
 
-  showGeneralDialog(
-    context: context,
-    barrierDismissible: true,
-    barrierLabel: "detalle_clase",
-    barrierColor: Colors.black.withOpacity(0.45),
-    transitionDuration: const Duration(milliseconds: 220),
-    pageBuilder: (_, _, _) {
-      return Center(
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            width: MediaQuery.of(context).size.width * 0.85,
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  "Detalle de clase",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 14),
-
-                _infoFila("Materia", materia),
-                _infoFila("Horario", "$horaInicio - $horaFin"),
-                _infoFila("Fecha", fechaTxt),
-                _infoFila("Estado", estado),
-                _infoFila("Tipo", tipo),
-
-                const SizedBox(height: 18),
-
-                if (!bloqueada) ...[
-                  botonPrimario(
-                    texto: "Tomar asistencia",
-                    icono: Icons.checklist,
-                    onTap: () {
-                      Navigator.pop(context);
-                      _tomarAsistencia(context, clase);
-                    },
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: "detalle_clase",
+      barrierColor: Colors.black.withOpacity(0.45),
+      transitionDuration: const Duration(milliseconds: 220),
+      pageBuilder: (_, _, _) {
+        return Center(
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.85,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    "Detalle de clase",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 14),
 
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      await clase.reference.update({"estado": "cancelada"});
-                      if (context.mounted) Navigator.pop(context);
-                    },
-                    icon: const Icon(Icons.cancel_outlined),
-                    label: const Text("Cancelar clase"),
-                  ),
-                ] else ...[
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      estado == "hecha"
-                          ? "✅ Esta clase ya está marcada como hecha."
-                          : "❌ Esta clase fue cancelada.",
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                  // ✅ SOLO si fue cancelada: botón Reprogramar
-                  if (estado == "cancelada") ...[
-                    const SizedBox(height: 12),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 255, 190, 92), // amarillo
-                        foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      icon: const Icon(Icons.schedule),
-                      label: const Text("Reprogramar"),
-                      onPressed: () {
+                  _infoFila("Materia", materia),
+                  _infoFila("Horario", "$horaInicio - $horaFin"),
+                  _infoFila("Fecha", fechaTxt),
+                  _infoFila("Estado", estado),
+                  _infoFila("Tipo", tipo),
+
+                  const SizedBox(height: 18),
+
+                  if (!bloqueada) ...[
+                    botonPrimario(
+                      texto: "Tomar asistencia",
+                      icono: Icons.checklist,
+                      onTap: () {
                         Navigator.pop(context);
-                        _mostrarModalReprogramarClase(context, clase);
+                        _tomarAsistencia(context, clase);
                       },
                     ),
+                    const SizedBox(height: 10),
+
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        await clase.reference.update({"estado": "cancelada"});
+                        if (context.mounted) Navigator.pop(context);
+                      },
+                      icon: const Icon(Icons.cancel_outlined),
+                      label: const Text("Cancelar clase"),
+                    ),
+                  ] else ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        estado == "hecha"
+                            ? "âœ… Esta clase ya estÃ¡ marcada como hecha."
+                            : "âŒ Esta clase fue cancelada.",
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    // âœ… SOLO si fue cancelada: botÃ³n Reprogramar
+                    if (estado == "cancelada") ...[
+                      const SizedBox(height: 12),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(
+                            255,
+                            255,
+                            190,
+                            92,
+                          ), // amarillo
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(Icons.schedule),
+                        label: const Text("Reprogramar"),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _mostrarModalReprogramarClase(context, clase);
+                        },
+                      ),
+                    ],
                   ],
                 ],
-              ],
+              ),
             ),
           ),
-        ),
-      );
-    },
-    transitionBuilder: (_, anim, _, child) {
-      final curved = CurvedAnimation(parent: anim, curve: Curves.easeOutBack);
+        );
+      },
+      transitionBuilder: (_, anim, _, child) {
+        final curved = CurvedAnimation(parent: anim, curve: Curves.easeOutBack);
 
-      return FadeTransition(
-        opacity: anim,
-        child: ScaleTransition(
-          scale: Tween<double>(begin: 0.92, end: 1.0).animate(curved),
-          child: child,
-        ),
-      );
-    },
-  );
+        return FadeTransition(
+          opacity: anim,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.92, end: 1.0).animate(curved),
+            child: child,
+          ),
+        );
+      },
+    );
+  }
 }
-}
-  /// Tomar asistencia
+
+/// Tomar asistencia
 void _tomarAsistencia(BuildContext context, QueryDocumentSnapshot clase) async {
   final alumnosIds = List<String>.from(clase["alumnosId"]);
   final asistieron = <String>[];
@@ -1140,9 +1271,7 @@ void _tomarAsistencia(BuildContext context, QueryDocumentSnapshot clase) async {
             child: ListView(
               padding: const EdgeInsets.all(14),
               children: [
-                const ListTile(
-                  title: Text("Asistencia"),
-                ),
+                const ListTile(title: Text("Asistencia")),
 
                 ...alumnosDocs.docs.map((alumno) {
                   final id = alumno.id;
@@ -1171,7 +1300,7 @@ void _tomarAsistencia(BuildContext context, QueryDocumentSnapshot clase) async {
                   onPressed: () async {
                     await clase.reference.update({
                       "asistieron": asistieron,
-                      "estado": "hecha", // ✅ cambia estado
+                      "estado": "hecha", // âœ… cambia estado
                       "asistenciaTomadaAt": Timestamp.now(),
                     });
                     Navigator.pop(context);
@@ -1193,15 +1322,17 @@ Future<void> _mostrarModalReprogramarClase(
 ) async {
   final data = clase.data() as Map<String, dynamic>;
 
-  // ✅ No se cambian
+  // âœ… No se cambian
   final String materia = (data["materia"] ?? "Sin materia").toString();
   final List<String> alumnosIds = List<String>.from(data["alumnosId"] ?? []);
-  final String profesorId = (data["profesorId"] ?? FirebaseAuth.instance.currentUser!.uid).toString();
+  final String profesorId =
+      (data["profesorId"] ?? FirebaseAuth.instance.currentUser!.uid).toString();
 
   // (si usas tipoClase en tu app)
-  final String tipoClase = (data["tipoClase"] ?? "presencial").toString(); // se mantiene igual
+  final String tipoClase = (data["tipoClase"] ?? "presencial")
+      .toString(); // se mantiene igual
 
-  // ✅ Solo se cambian
+  // âœ… Solo se cambian
   DateTime fechaSeleccionada = DateTime.now();
   TimeOfDay? horaInicio;
   TimeOfDay? horaFin;
@@ -1214,7 +1345,9 @@ Future<void> _mostrarModalReprogramarClase(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
         child: StatefulBuilder(
           builder: (context, setModalState) {
-            final textoHoraInicio = horaInicio == null ? "Hora inicio" : fmt24(horaInicio!);
+            final textoHoraInicio = horaInicio == null
+                ? "Hora inicio"
+                : fmt24(horaInicio!);
             final textoHoraFin = horaFin == null ? "Hora fin" : fmt24(horaFin!);
 
             return Padding(
@@ -1227,13 +1360,19 @@ Future<void> _mostrarModalReprogramarClase(
                     const Text(
                       "Reprogramar clase",
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 14),
 
-                    // ✅ Materia fija (solo lectura)
+                    // âœ… Materia fija (solo lectura)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 14,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.grey.shade200,
                         borderRadius: BorderRadius.circular(12),
@@ -1245,7 +1384,9 @@ Future<void> _mostrarModalReprogramarClase(
                           Expanded(
                             child: Text(
                               materia,
-                              style: const TextStyle(fontWeight: FontWeight.w700),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
                         ],
@@ -1254,41 +1395,59 @@ Future<void> _mostrarModalReprogramarClase(
 
                     const SizedBox(height: 10),
 
-                    // ✅ Alumnos fijos (solo info)
+                    // âœ… Alumnos fijos (solo info)
                     Text(
                       "Alumnos: ${alumnosIds.length}",
-                      style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
 
                     const SizedBox(height: 14),
 
-                    // ✅ Hora inicio
+                    // âœ… Hora inicio
                     InkWell(
                       onTap: () async {
-                        final picked = await mostrarPickerHoraIOS(context, inicial: horaInicio);
-                        if (picked != null) setModalState(() => horaInicio = picked);
+                        final picked = await mostrarPickerHoraIOS(
+                          context,
+                          inicial: horaInicio,
+                        );
+                        if (picked != null)
+                          setModalState(() => horaInicio = picked);
                       },
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 14,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.grey.shade900,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.access_time, color: Colors.white70),
+                            const Icon(
+                              Icons.access_time,
+                              color: Colors.white70,
+                            ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 textoHoraInicio,
                                 style: TextStyle(
-                                  color: horaInicio == null ? Colors.white54 : Colors.white,
+                                  color: horaInicio == null
+                                      ? Colors.white54
+                                      : Colors.white,
                                   fontSize: 16,
                                 ),
                               ),
                             ),
-                            const Icon(Icons.keyboard_arrow_down, color: Colors.white70),
+                            const Icon(
+                              Icons.keyboard_arrow_down,
+                              color: Colors.white70,
+                            ),
                           ],
                         ),
                       ),
@@ -1296,33 +1455,48 @@ Future<void> _mostrarModalReprogramarClase(
 
                     const SizedBox(height: 12),
 
-                    // ✅ Hora fin
+                    // âœ… Hora fin
                     InkWell(
                       onTap: () async {
-                        final picked = await mostrarPickerHoraIOS(context, inicial: horaFin ?? horaInicio);
-                        if (picked != null) setModalState(() => horaFin = picked);
+                        final picked = await mostrarPickerHoraIOS(
+                          context,
+                          inicial: horaFin ?? horaInicio,
+                        );
+                        if (picked != null)
+                          setModalState(() => horaFin = picked);
                       },
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 14,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.grey.shade900,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.access_time_filled, color: Colors.white70),
+                            const Icon(
+                              Icons.access_time_filled,
+                              color: Colors.white70,
+                            ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 textoHoraFin,
                                 style: TextStyle(
-                                  color: horaFin == null ? Colors.white54 : Colors.white,
+                                  color: horaFin == null
+                                      ? Colors.white54
+                                      : Colors.white,
                                   fontSize: 16,
                                 ),
                               ),
                             ),
-                            const Icon(Icons.keyboard_arrow_down, color: Colors.white70),
+                            const Icon(
+                              Icons.keyboard_arrow_down,
+                              color: Colors.white70,
+                            ),
                           ],
                         ),
                       ),
@@ -1330,7 +1504,7 @@ Future<void> _mostrarModalReprogramarClase(
 
                     const SizedBox(height: 12),
 
-                    // ✅ Fecha
+                    // âœ… Fecha
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -1346,7 +1520,8 @@ Future<void> _mostrarModalReprogramarClase(
                               firstDate: DateTime(2023),
                               lastDate: DateTime(2030),
                             );
-                            if (picked != null) setModalState(() => fechaSeleccionada = picked);
+                            if (picked != null)
+                              setModalState(() => fechaSeleccionada = picked);
                           },
                           child: const Text("Cambiar"),
                         ),
@@ -1355,44 +1530,59 @@ Future<void> _mostrarModalReprogramarClase(
 
                     const SizedBox(height: 14),
 
-                    // ✅ Guardar reprogramación
+                    // âœ… Guardar reprogramaciÃ³n
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 255, 190, 92),
+                        backgroundColor: const Color.fromARGB(
+                          255,
+                          255,
+                          190,
+                          92,
+                        ),
                         foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                       ),
                       icon: const Icon(Icons.check),
-                      label: const Text("Guardar reprogramación"),
+                      label: const Text("Guardar reprogramaciÃ³n"),
                       onPressed: () async {
                         if (horaInicio == null || horaFin == null) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Completa hora inicio y hora fin")),
+                            const SnackBar(
+                              content: Text("Completa hora inicio y hora fin"),
+                            ),
                           );
                           return;
                         }
 
-                        // ✅ crea una NUEVA clase reprogramada
-                        await FirebaseFirestore.instance.collection("clases").add({
-                          "materia": materia,
-                          "horaInicio": fmt24(horaInicio!),
-                          "horaFin": fmt24(horaFin!),
-                          "fecha": Timestamp.fromDate(fechaSeleccionada),
-                          "profesorId": profesorId,
-                          "alumnosId": alumnosIds,
-                          "asistieron": [],
-                          "estado": "reprogramada", // ✅ guarda así en minúscula
-                          "tipoClase": tipoClase,    // ✅ se mantiene
-                          "reprogramadaDe": clase.id, // opcional pero RECOMENDADO
-                          "createdAt": Timestamp.now(),
-                        });
+                        // âœ… crea una NUEVA clase reprogramada
+                        await FirebaseFirestore.instance.collection("clases").add(
+                          {
+                            "materia": materia,
+                            "horaInicio": fmt24(horaInicio!),
+                            "horaFin": fmt24(horaFin!),
+                            "fecha": Timestamp.fromDate(fechaSeleccionada),
+                            "profesorId": profesorId,
+                            "alumnosId": alumnosIds,
+                            "asistieron": [],
+                            "estado":
+                                "reprogramada", // âœ… guarda asÃ­ en minÃºscula
+                            "tipoClase": tipoClase, // âœ… se mantiene
+                            "reprogramadaDe":
+                                clase.id, // opcional pero RECOMENDADO
+                            "createdAt": Timestamp.now(),
+                          },
+                        );
 
                         if (context.mounted) Navigator.pop(context);
 
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Clase reprogramada ✅")),
+                            const SnackBar(
+                              content: Text("Clase reprogramada âœ…"),
+                            ),
                           );
                         }
                       },
@@ -1408,7 +1598,6 @@ Future<void> _mostrarModalReprogramarClase(
   );
 }
 
-
 Widget _infoFila(String titulo, String valor) {
   return Padding(
     padding: const EdgeInsets.only(bottom: 8),
@@ -1419,7 +1608,10 @@ Widget _infoFila(String titulo, String valor) {
           width: 70,
           child: Text(
             "$titulo:",
-            style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.grey),
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.grey,
+            ),
           ),
         ),
         Expanded(child: Text(valor)),
@@ -1433,239 +1625,181 @@ class _HomeProfesorState extends State<HomeProfesor> {
   DateTime semanaActual = DateTime.now();
   int direccionAnimacion = 1;
 
-   Widget _chipTipo(
-  String value,
-  String label,
-  String tipoActual,
-  Function(String) onChanged,
-) {
-  final selected = tipoActual == value;
+  Widget _chipTipo(
+    String value,
+    String label,
+    String tipoActual,
+    Function(String) onChanged,
+  ) {
+    final selected = tipoActual == value;
 
-  return ChoiceChip(
-    label: Text(label),
-    selected: selected,
-    selectedColor: kPrimary,
-    backgroundColor: Colors.grey.shade800,
-    labelStyle: TextStyle(
-      color: selected ? Colors.white : Colors.white70,
-      fontWeight: FontWeight.w600,
-    ),
-    onSelected: (_) => onChanged(value),
-  );
-}
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      selectedColor: kPrimary,
+      backgroundColor: Colors.grey.shade800,
+      labelStyle: TextStyle(
+        color: selected ? Colors.white : Colors.white70,
+        fontWeight: FontWeight.w600,
+      ),
+      onSelected: (_) => onChanged(value),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
-      return const Scaffold(body: Center(child: Text("Usuario no autenticado")));
+      return const Scaffold(
+        body: Center(child: Text("Usuario no autenticado")),
+      );
     }
 
-final paginas = [
-  HorarioView(
-    profesorId: user.uid,
-    semanaActual: semanaActual,
-    direccionAnimacion: direccionAnimacion,
-    onSemanaChange: (nuevaSemana, dir) {
-      setState(() {
-        semanaActual = nuevaSemana;
-        direccionAnimacion = dir;
-      });
-    },
-  ),
+    final paginas = [
+      HorarioView(
+        profesorId: user.uid,
+        semanaActual: semanaActual,
+        direccionAnimacion: direccionAnimacion,
+        onSemanaChange: (nuevaSemana, dir) {
+          setState(() {
+            semanaActual = nuevaSemana;
+            direccionAnimacion = dir;
+          });
+        },
+      ),
 
-  // Notificaciones
-  Container(
-    color: kPrimary,
-    child: const Center(
-      child: Text("Notificaciones", style: TextStyle(color: Colors.white)),
-    ),
-  ),
-  NotificacionesProfesorView(profesorId: user.uid),
-  // Perfil
-  PerfilProfesorView(profesorId: user.uid,),
-];
-
-
-String tituloActual() {
-  switch (_currentIndex) {
-    case 0: return "Horario";
-    case 2: return "Notificaciones";
-    case 3: return "Perfil";
-    default: return "";
-  }
-}
-
-return Scaffold(
-  backgroundColor: kPrimary,
-  body: Column(
-    children: [
-      AppHeader(titulo: tituloActual()), // ✅ ya no es const
-      Expanded(child: paginas[_currentIndex]),
-    ],
-  ),
-
-  floatingActionButton: (_currentIndex == 0)
-      ? FloatingActionButton(
-          backgroundColor: kPrimary,
-          onPressed: () => _mostrarModalCrearClase(context, user.uid),
-          child: const Icon(Icons.add, color: Colors.white, size: 34),
-        )
-      : null,
-
-  floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-
-  bottomNavigationBar: BottomAppBar(
-    color: kPrimary,
-    child: SafeArea(
-      top: false,
-      child: SizedBox(
-        height: 60,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _tabItem(icon: Icons.calendar_today, label: "Horario", index: 0),
-            _tabItem(icon: Icons.notifications_none, label: "Notificaciones", index: 2),
-            _tabItem(icon: Icons.person_outline, label: "Perfil", index: 3),
-            _logoutTabItem(),
-          ],
+      // Notificaciones
+      Container(
+        color: context.appPrimaryBackground,
+        child: const Center(
+          child: Text("Notificaciones", style: TextStyle(color: Colors.white)),
         ),
       ),
-    ),
-  ),
-);
-}
+      NotificacionesProfesorView(profesorId: user.uid),
+      // Perfil
+      PerfilProfesorView(profesorId: user.uid),
+    ];
 
-Widget _tabItem({
-  required IconData icon,
-  required String label,
-  required int index,
-  bool isLogout = false,
-}) {
-  final selected = _currentIndex == index;
-
-  return InkWell(
-    borderRadius: BorderRadius.circular(30),
-    onTap: () async {
-      if (isLogout) {
-        await AuthNavigationService.signOutAndReturnToLogin(context);
-        return;
+    String tituloActual() {
+      switch (_currentIndex) {
+        case 0:
+          return "Horario";
+        case 2:
+          return "Notificaciones";
+        case 3:
+          return "Perfil";
+        default:
+          return "";
       }
-      setState(() => _currentIndex = index);
-    },
-    child: Column(
-  mainAxisSize: MainAxisSize.min,
-  mainAxisAlignment: MainAxisAlignment.center,
-  children: [
-    Text(
-      label,
-      style: TextStyle(
-        fontSize: 10,
-        height: 1.0,
-        color: Colors.white,
-        fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
-      ),
-    ),
-    const SizedBox(height: 4),
-    AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      height: 38,
-      width: 38,
-      decoration: BoxDecoration(
-        color: selected ? Colors.white : Colors.transparent,
-        shape: BoxShape.circle,
-      ),
-      alignment: Alignment.center,
-      child: Icon(
-        icon,
-        color: selected ? kPrimary : Colors.white,
-        size: 20,
-      ),
-    ),
-  ],
-),
-  );
-}
+    }
 
-Widget _logoutTabItem() {
-  return InkWell(
-    borderRadius: BorderRadius.circular(30),
-    onTap: () async {
-      await AuthNavigationService.signOutAndReturnToLogin(context);
-    },
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: const [
-        Text(
-          "Cerrar sesión",
-          style: TextStyle(
-            fontSize: 10,
-            height: 1.0,
-            color: Colors.white,
+    return Scaffold(
+      extendBody: true,
+      backgroundColor: context.appPrimaryBackground,
+      body: Column(
+        children: [
+          AppHeader(titulo: tituloActual()), // âœ… ya no es const
+          Expanded(child: paginas[_currentIndex]),
+        ],
+      ),
+
+      floatingActionButton: (_currentIndex == 0)
+          ? FloatingActionButton(
+              backgroundColor: kPrimary,
+              onPressed: () => _mostrarModalCrearClase(context, user.uid),
+              child: const Icon(Icons.add, color: Colors.white, size: 34),
+            )
+          : null,
+
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+
+      bottomNavigationBar: LiquidGlassBottomNav(
+        currentIndex: _currentIndex,
+        destinations: const [
+          LiquidGlassNavDestination(
+            icon: Icons.calendar_today,
+            label: "Horario",
+            index: 0,
           ),
-        ),
-        SizedBox(height: 4),
-        Icon(Icons.logout, color: Colors.white, size: 20),
-      ],
-    ),
-  );
-}
-
-int _durToMin(String d) {
-  switch (d) {
-    case "45": return 45;
-    case "60": return 60;
-    case "90": return 90;
-    case "120": return 120;
-    default: return 60;
-  }
-}
-
-TimeOfDay _addMinutes(TimeOfDay t, int minutes) {
-  final total = t.hour * 60 + t.minute + minutes;
-  final h = (total ~/ 60) % 24;
-  final m = total % 60;
-  return TimeOfDay(hour: h, minute: m);
-}
-
-Future<String?> _pickDuracion(BuildContext context, {required String actual}) async {
-  const opciones = ["45", "60", "90", "120"];
-
-  return showDialog<String>(
-    context: context,
-    builder: (_) {
-      return AlertDialog(
-        title: const Text("Elige duración"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: opciones.map((v) {
-            final selected = v == actual;
-            return ListTile(
-              title: Text("$v min"),
-              trailing: Icon(
-                selected ? Icons.check_circle : Icons.radio_button_unchecked,
-                color: selected ? kPrimary : Colors.grey,
-              ),
-              onTap: () => Navigator.pop(context, v),
-            );
-          }).toList(),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancelar"),
+          LiquidGlassNavDestination(
+            icon: Icons.notifications_none,
+            label: "Notificaciones",
+            index: 2,
+          ),
+          LiquidGlassNavDestination(
+            icon: Icons.person_outline,
+            label: "Perfil",
+            index: 3,
           ),
         ],
-      );
-    },
-  );
-}
+        onDestinationSelected: (index) => setState(() => _currentIndex = index),
+        onLogoutPressed: () =>
+            AuthNavigationService.signOutAndReturnToLogin(context),
+      ),
+    );
+  }
+
+  int _durToMin(String d) {
+    switch (d) {
+      case "45":
+        return 45;
+      case "60":
+        return 60;
+      case "90":
+        return 90;
+      case "120":
+        return 120;
+      default:
+        return 60;
+    }
+  }
+
+  TimeOfDay _addMinutes(TimeOfDay t, int minutes) {
+    final total = t.hour * 60 + t.minute + minutes;
+    final h = (total ~/ 60) % 24;
+    final m = total % 60;
+    return TimeOfDay(hour: h, minute: m);
+  }
+
+  Future<String?> _pickDuracion(
+    BuildContext context, {
+    required String actual,
+  }) async {
+    const opciones = ["45", "60", "90", "120"];
+
+    return showDialog<String>(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text("Elige duraciÃ³n"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: opciones.map((v) {
+              final selected = v == actual;
+              return ListTile(
+                title: Text("$v min"),
+                trailing: Icon(
+                  selected ? Icons.check_circle : Icons.radio_button_unchecked,
+                  color: selected ? kPrimary : Colors.grey,
+                ),
+                onTap: () => Navigator.pop(context, v),
+              );
+            }).toList(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancelar"),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   /// Modal crear clase (con picker iOS ruedita)
   void _mostrarModalCrearClase(BuildContext context, String profesorId) {
-    
     String tipoClase = "presencial";
 
     final materiaController = TextEditingController();
@@ -1682,37 +1816,49 @@ Future<String?> _pickDuracion(BuildContext context, {required String actual}) as
       barrierDismissible: true,
       builder: (context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
           child: StatefulBuilder(
             builder: (context, setModalState) {
-              final textoHoraInicio = horaInicio == null ? "Hora inicio" : fmt24(horaInicio!);
+              final textoHoraInicio = horaInicio == null
+                  ? "Hora inicio"
+                  : fmt24(horaInicio!);
 
               final minutos = _durToMin(duracion);
-              final horaFinCalc = (horaInicio == null) ? null : _addMinutes(horaInicio!, minutos);
+              final horaFinCalc = (horaInicio == null)
+                  ? null
+                  : _addMinutes(horaInicio!, minutos);
 
-               return Padding(
-              padding: const EdgeInsets.all(20),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
+              return Padding(
+                padding: const EdgeInsets.all(20),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
                       const Text(
                         "Nueva Clase",
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 14),
 
                       TextField(
                         controller: materiaController,
-                        obscureText: false, // ✅ NO es contraseña
+                        obscureText: false, // âœ… NO es contraseÃ±a
                         style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(
                           hintText: "Materia",
                           hintStyle: const TextStyle(color: Colors.white54),
                           floatingLabelBehavior: FloatingLabelBehavior.never,
-                          prefixIcon: const Icon(Icons.book, color: Colors.white),
+                          prefixIcon: const Icon(
+                            Icons.book,
+                            color: Colors.white,
+                          ),
                           filled: true,
                           fillColor: Colors.grey.shade900,
                           border: OutlineInputBorder(
@@ -1727,30 +1873,45 @@ Future<String?> _pickDuracion(BuildContext context, {required String actual}) as
                       // Hora inicio (ruedita iOS)
                       InkWell(
                         onTap: () async {
-                          final picked = await mostrarPickerHoraIOS(context, inicial: horaInicio);
-                          if (picked != null) setModalState(() => horaInicio = picked);
+                          final picked = await mostrarPickerHoraIOS(
+                            context,
+                            inicial: horaInicio,
+                          );
+                          if (picked != null)
+                            setModalState(() => horaInicio = picked);
                         },
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 14,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.grey.shade900,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.access_time, color: Colors.white70),
+                              const Icon(
+                                Icons.access_time,
+                                color: Colors.white70,
+                              ),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
                                   textoHoraInicio,
                                   style: TextStyle(
-                                    color: horaInicio == null ? Colors.white54 : Colors.white,
+                                    color: horaInicio == null
+                                        ? Colors.white54
+                                        : Colors.white,
                                     fontSize: 16,
                                   ),
                                 ),
                               ),
-                              const Icon(Icons.keyboard_arrow_down, color: Colors.white70),
+                              const Icon(
+                                Icons.keyboard_arrow_down,
+                                color: Colors.white70,
+                              ),
                             ],
                           ),
                         ),
@@ -1759,50 +1920,62 @@ Future<String?> _pickDuracion(BuildContext context, {required String actual}) as
                       const SizedBox(height: 12),
 
                       // Hora fin (ruedita iOS)
-                     const SizedBox(height: 12),
+                      const SizedBox(height: 12),
 
-InkWell(
-  onTap: () async {
-    final picked = await _pickDuracion(context, actual: duracion);
-    if (picked != null) setModalState(() => duracion = picked);
-  },
-  borderRadius: BorderRadius.circular(12),
-  child: Container(
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-    decoration: BoxDecoration(
-      color: Colors.grey.shade900,
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: Row(
-      children: [
-        const Icon(Icons.timer, color: Colors.white70),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            "Duración: $duracion min",
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-            ),
-          ),
-        ),
-        const Icon(Icons.keyboard_arrow_down, color: Colors.white70),
-      ],
-    ),
-  ),
-),
+                      InkWell(
+                        onTap: () async {
+                          final picked = await _pickDuracion(
+                            context,
+                            actual: duracion,
+                          );
+                          if (picked != null)
+                            setModalState(() => duracion = picked);
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade900,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.timer, color: Colors.white70),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  "DuraciÃ³n: $duracion min",
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                              const Icon(
+                                Icons.keyboard_arrow_down,
+                                color: Colors.white70,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
 
                       const SizedBox(height: 12),
 
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text("Fecha: ${fechaSeleccionada.day}/${fechaSeleccionada.month}/${fechaSeleccionada.year}"),
+                          Text(
+                            "Fecha: ${fechaSeleccionada.day}/${fechaSeleccionada.month}/${fechaSeleccionada.year}",
+                          ),
                           TextButton(
                             style: ElevatedButton.styleFrom(
-                            backgroundColor:kPrimary,
-                            foregroundColor: Colors.white,
-                            ),  
+                              backgroundColor: kPrimary,
+                              foregroundColor: Colors.white,
+                            ),
                             onPressed: () async {
                               final picked = await showDatePicker(
                                 context: context,
@@ -1810,7 +1983,8 @@ InkWell(
                                 firstDate: DateTime(2023),
                                 lastDate: DateTime(2030),
                               );
-                              if (picked != null) setModalState(() => fechaSeleccionada = picked);
+                              if (picked != null)
+                                setModalState(() => fechaSeleccionada = picked);
                             },
                             child: const Text("Cambiar"),
                           ),
@@ -1820,132 +1994,152 @@ InkWell(
                       const SizedBox(height: 8),
 
                       // ------- Alumnos -------
-const SizedBox(height: 12),
+                      const SizedBox(height: 12),
 
-Container(
-  padding: const EdgeInsets.all(10),
-  decoration: BoxDecoration(
-    borderRadius: BorderRadius.circular(12),
-  ),
-  child: Wrap(
-    spacing: 10,
-    runSpacing: 10,
-    children: [
-      _chipTipo(
-  "presencial",
-  "Presencial",
-  tipoClase,
-  (v) => setModalState(() => tipoClase = v),
-),
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            _chipTipo(
+                              "presencial",
+                              "Presencial",
+                              tipoClase,
+                              (v) => setModalState(() => tipoClase = v),
+                            ),
 
-_chipTipo(
-  "virtual",
-  "Virtual",
-  tipoClase,
-  (v) => setModalState(() => tipoClase = v),
-),
+                            _chipTipo(
+                              "virtual",
+                              "Virtual",
+                              tipoClase,
+                              (v) => setModalState(() => tipoClase = v),
+                            ),
+                          ],
+                        ),
+                      ),
 
-    ],
-  ),
-),
+                      // ---------- Alumnos (lista + buscador + botÃ³n check) ----------
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Alumnos (${alumnosSeleccionados.length})",
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          TextButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: kPrimary,
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: () => setModalState(
+                              () => alumnosSeleccionados.clear(),
+                            ),
+                            child: const Text("Limpiar"),
+                          ),
+                        ],
+                      ),
 
-// ---------- Alumnos (lista + buscador + botón check) ----------
-Row(
-  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  children: [
-    Text(
-      "Alumnos (${alumnosSeleccionados.length})",
-      style: const TextStyle(fontWeight: FontWeight.bold),
-    ),
-    TextButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor:kPrimary,
-        foregroundColor: Colors.white,
-      ),  
-      onPressed: () => setModalState(() => alumnosSeleccionados.clear()),
-      child: const Text("Limpiar"),
-    ),
-  ],
-),
+                      const SizedBox(height: 8),
 
-const SizedBox(height: 8),
+                      TextField(
+                        onChanged: (v) => setModalState(
+                          () => filtroAlumno = v.trim().toLowerCase(),
+                        ),
+                        obscureText: false, // âœ…
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: "Buscar alumno...",
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            color: Colors.white70,
+                          ),
+                          hintStyle: const TextStyle(color: Colors.white54),
+                          filled: true,
+                          fillColor: Colors.grey.shade900,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
 
-TextField(
-  onChanged: (v) => setModalState(() => filtroAlumno = v.trim().toLowerCase()),
-  obscureText: false, // ✅
-  style: const TextStyle(color: Colors.white),
-  decoration: InputDecoration(
-    hintText: "Buscar alumno...",
-    prefixIcon: const Icon(Icons.search, color: Colors.white70),
-    hintStyle: const TextStyle(color: Colors.white54),
-    filled: true,
-    fillColor: Colors.grey.shade900,
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide.none,
-    ),
-  ),
-),
+                      const SizedBox(height: 10),
 
-const SizedBox(height: 10),
+                      SizedBox(
+                        height: 120,
+                        child: StreamBuilder<QuerySnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection("usuarios")
+                              .where("rol", isEqualTo: "alumno")
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
 
-SizedBox(
-  height: 120,
-  child: StreamBuilder<QuerySnapshot>(
-    stream: FirebaseFirestore.instance
-        .collection("usuarios")
-        .where("rol", isEqualTo: "alumno")
-        .snapshots(),
-    builder: (context, snapshot) {
-      if (!snapshot.hasData) {
-        return const Center(child: CircularProgressIndicator());
-      }
+                            // Lista completa, pero filtrada por bÃºsqueda
+                            final alumnos = snapshot.data!.docs.where((doc) {
+                              final nombre = (doc["nombre"] ?? "")
+                                  .toString()
+                                  .toLowerCase();
+                              if (filtroAlumno.isEmpty) return true;
+                              return nombre.contains(filtroAlumno);
+                            }).toList();
 
-      // Lista completa, pero filtrada por búsqueda
-      final alumnos = snapshot.data!.docs.where((doc) {
-        final nombre = (doc["nombre"] ?? "").toString().toLowerCase();
-        if (filtroAlumno.isEmpty) return true;
-        return nombre.contains(filtroAlumno);
-      }).toList();
+                            if (alumnos.isEmpty) {
+                              return const Center(
+                                child: Text("No se encontrÃ³ ese alumno"),
+                              );
+                            }
 
-      if (alumnos.isEmpty) {
-        return const Center(child: Text("No se encontró ese alumno"));
-      }
+                            return ListView.separated(
+                              itemCount: alumnos.length,
+                              separatorBuilder: (_, _) =>
+                                  const Divider(height: 1),
+                              itemBuilder: (context, i) {
+                                final alumno = alumnos[i];
+                                final id = alumno.id;
+                                final nombre =
+                                    (alumno["nombre"] ?? "Sin nombre")
+                                        .toString();
 
-      return ListView.separated(
-        itemCount: alumnos.length,
-        separatorBuilder: (_, _) => const Divider(height: 1),
-        itemBuilder: (context, i) {
-          final alumno = alumnos[i];
-          final id = alumno.id;
-          final nombre = (alumno["nombre"] ?? "Sin nombre").toString();
+                                final seleccionado = alumnosSeleccionados
+                                    .contains(id);
 
-          final seleccionado = alumnosSeleccionados.contains(id);
-
-          return ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(nombre),
-            trailing: IconButton(
-              onPressed: () {
-                setModalState(() {
-                  if (seleccionado) {
-                    alumnosSeleccionados.remove(id);
-                  } else {
-                    alumnosSeleccionados.add(id);
-                  }
-                });
-              },
-              icon: Icon(
-                seleccionado ? Icons.check_circle : Icons.add_circle_outline,
-                color: seleccionado ? kPrimary : Colors.grey,
-              ),
-            ),
-          );
-        },
-      );
-    },
-  ),
-),
+                                return ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  title: Text(nombre),
+                                  trailing: IconButton(
+                                    onPressed: () {
+                                      setModalState(() {
+                                        if (seleccionado) {
+                                          alumnosSeleccionados.remove(id);
+                                        } else {
+                                          alumnosSeleccionados.add(id);
+                                        }
+                                      });
+                                    },
+                                    icon: Icon(
+                                      seleccionado
+                                          ? Icons.check_circle
+                                          : Icons.add_circle_outline,
+                                      color: seleccionado
+                                          ? kPrimary
+                                          : Colors.grey,
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
 
                       const SizedBox(height: 14),
 
@@ -1954,36 +2148,43 @@ SizedBox(
 
                         icono: Icons.school, // opcional, puedes quitarlo
                         onTap: () async {
-                          if (materiaController.text.trim().isEmpty || horaInicio == null) {
+                          if (materiaController.text.trim().isEmpty ||
+                              horaInicio == null) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Completa materia y hora inicio")),
+                              const SnackBar(
+                                content: Text("Completa materia y hora inicio"),
+                              ),
                             );
                             return;
                           }
                           if (alumnosSeleccionados.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Selecciona al menos 1 alumno")),
+                              const SnackBar(
+                                content: Text("Selecciona al menos 1 alumno"),
+                              ),
                             );
                             return;
                           }
 
-                          await FirebaseFirestore.instance.collection("clases").add({
-                            "materia": materiaController.text.trim(),
-                            "horaInicio": fmt24(horaInicio!),
-                            "horaFin": fmt24(horaFinCalc!),
-                            "duracionMin": minutos,
-                            "fecha": Timestamp.fromDate(fechaSeleccionada),
-                            "profesorId": profesorId,
-                            "alumnosId": alumnosSeleccionados,
-                            "asistieron": [],
-                            "estado": "activa",
-                            "tipo": tipoClase, // ✅ presencial | virtual
-                            "createdAt": Timestamp.now(),
-                          });
-                      
+                          await FirebaseFirestore.instance
+                              .collection("clases")
+                              .add({
+                                "materia": materiaController.text.trim(),
+                                "horaInicio": fmt24(horaInicio!),
+                                "horaFin": fmt24(horaFinCalc!),
+                                "duracionMin": minutos,
+                                "fecha": Timestamp.fromDate(fechaSeleccionada),
+                                "profesorId": profesorId,
+                                "alumnosId": alumnosSeleccionados,
+                                "asistieron": [],
+                                "estado": "activa",
+                                "tipo": tipoClase, // âœ… presencial | virtual
+                                "createdAt": Timestamp.now(),
+                              });
+
                           if (context.mounted) Navigator.pop(context);
-  },
-),
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -2027,12 +2228,12 @@ class AppHeader extends StatelessWidget {
                     color: Colors.black.withOpacity(0.18),
                     blurRadius: 14,
                     offset: const Offset(0, 6),
-                  )
+                  ),
                 ],
               ),
               child: Image.asset(
                 "assets/images/logo.png",
-                height: 44, // ✅ logo grande
+                height: 44, // âœ… logo grande
                 fit: BoxFit.contain,
               ),
             ),

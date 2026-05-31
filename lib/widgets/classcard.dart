@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sbg_profesores/theme/app_theme.dart';
 
 class ClaseCard extends StatelessWidget {
   final String hora;
@@ -68,7 +69,9 @@ class ClaseCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _pastel(colorBase),
+        color: context.isDarkMode
+            ? Color.alphaBlend(colorBase.withOpacity(0.18), context.appCard)
+            : _pastel(colorBase),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: colorBase, width: 1.5),
       ),
@@ -96,7 +99,7 @@ class ClaseCard extends StatelessWidget {
               children: [
                 Text(materia, style: const TextStyle(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 2),
-                Text(profesor, style: const TextStyle(color: Colors.black54)),
+                Text(profesor, style: TextStyle(color: context.appMutedText)),
               ],
             ),
           ),
@@ -106,7 +109,7 @@ class ClaseCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               // Icono tipo (siempre)
-              Icon(iconTipo, size: 20, color: Colors.black87),
+              Icon(iconTipo, size: 20, color: context.appText),
 
               if (iconEstado != null) ...[
                 const SizedBox(width: 10),

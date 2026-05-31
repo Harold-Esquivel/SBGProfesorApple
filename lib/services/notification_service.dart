@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -26,7 +25,6 @@ class NotificationService {
   final Set<int> _scheduledClassNotificationIds = <int>{};
 
   bool _initialized = false;
-  String? _activeUid;
 
   Future<void> initialize() async {
     if (_initialized) return;
@@ -41,7 +39,8 @@ class NotificationService {
 
     final androidPlugin = _plugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     await androidPlugin?.requestNotificationsPermission();
     await androidPlugin?.requestExactAlarmsPermission();
 
@@ -51,8 +50,6 @@ class NotificationService {
   Future<void> configureForUser(User user) async {
     await initialize();
     await clearUserContext(cancelAllNotifications: true);
-
-    _activeUid = user.uid;
 
     final email = (user.email ?? '').toLowerCase();
     if (email.endsWith('@sbgalumno.com')) {
@@ -80,8 +77,6 @@ class NotificationService {
     _classSubscription = null;
     _paymentSubscription = null;
     _requestSubscription = null;
-    _activeUid = null;
-
     for (final id in _scheduledClassNotificationIds) {
       await _plugin.cancel(id);
     }
@@ -102,11 +97,8 @@ class NotificationService {
         .where('estado', isEqualTo: 'activa')
         .snapshots()
         .listen((snapshot) {
-      _scheduleClassReminders(
-        docs: snapshot.docs,
-        role: 'alumno',
-      );
-    });
+          _scheduleClassReminders(docs: snapshot.docs, role: 'alumno');
+        });
   }
 
   void _listenProfessorClasses(String profesorId) {
@@ -116,11 +108,8 @@ class NotificationService {
         .where('estado', isEqualTo: 'activa')
         .snapshots()
         .listen((snapshot) {
-      _scheduleClassReminders(
-        docs: snapshot.docs,
-        role: 'profesor',
-      );
-    });
+          _scheduleClassReminders(docs: snapshot.docs, role: 'profesor');
+        });
   }
 
   void _listenStudentPayments(String alumnoId) {
@@ -129,43 +118,43 @@ class NotificationService {
         .where('alumnoId', isEqualTo: alumnoId)
         .snapshots()
         .listen((snapshot) async {
-      final pendientes = snapshot.docs.where((doc) {
-        final data = doc.data();
-        return (data['estado'] ?? 'pendiente') != 'pagado';
-      }).toList();
+          final pendientes = snapshot.docs.where((doc) {
+            final data = doc.data();
+            return (data['estado'] ?? 'pendiente') != 'pagado';
+          }).toList();
 
-      if (pendientes.isEmpty) {
-        await _plugin.cancel(_debtReminderId);
-        return;
-      }
+          if (pendientes.isEmpty) {
+            await _plugin.cancel(_debtReminderId);
+            return;
+          }
 
-      final atrasados = pendientes.where((doc) {
-        final vencimiento = doc.data()['fechaVencimiento'];
-        if (vencimiento is! Timestamp) return false;
+          final atrasados = pendientes.where((doc) {
+            final vencimiento = doc.data()['fechaVencimiento'];
+            if (vencimiento is! Timestamp) return false;
 
-        final fecha = vencimiento.toDate();
-        final hoy = DateTime.now();
-        final soloHoy = DateTime(hoy.year, hoy.month, hoy.day);
-        final soloFecha = DateTime(fecha.year, fecha.month, fecha.day);
-        return soloFecha.isBefore(soloHoy);
-      }).length;
+            final fecha = vencimiento.toDate();
+            final hoy = DateTime.now();
+            final soloHoy = DateTime(hoy.year, hoy.month, hoy.day);
+            final soloFecha = DateTime(fecha.year, fecha.month, fecha.day);
+            return soloFecha.isBefore(soloHoy);
+          }).length;
 
-      final body = atrasados > 0
-          ? 'Tienes $atrasados pago(s) atrasado(s). Revisa tu sección de pagos.'
-          : 'Tienes pagos pendientes por revisar.';
+          final body = atrasados > 0
+              ? 'Tienes $atrasados pago(s) atrasado(s). Revisa tu sección de pagos.'
+              : 'Tienes pagos pendientes por revisar.';
 
-      await _plugin.zonedSchedule(
-        _debtReminderId,
-        'SBG Profesores',
-        body,
-        _nextTimeAt(hour: 9, minute: 0),
-        _notificationDetails(),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        matchDateTimeComponents: DateTimeComponents.time,
-      );
-    });
+          await _plugin.zonedSchedule(
+            _debtReminderId,
+            'SBG Profesores',
+            body,
+            _nextTimeAt(hour: 9, minute: 0),
+            _notificationDetails(),
+            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime,
+            matchDateTimeComponents: DateTimeComponents.time,
+          );
+        });
   }
 
   void _listenProfessorRequests(String profesorId) {
@@ -175,33 +164,33 @@ class NotificationService {
         .where('estado', isEqualTo: 'pendiente')
         .snapshots()
         .listen((snapshot) async {
-      final prefs = await SharedPreferences.getInstance();
-      final key = 'notified_request_ids_$profesorId';
-      final known = prefs.getStringList(key)?.toSet() ?? <String>{};
-      final currentIds = snapshot.docs.map((doc) => doc.id).toSet();
+          final prefs = await SharedPreferences.getInstance();
+          final key = 'notified_request_ids_$profesorId';
+          final known = prefs.getStringList(key)?.toSet() ?? <String>{};
+          final currentIds = snapshot.docs.map((doc) => doc.id).toSet();
 
-      if (snapshot.docs.isNotEmpty && known.isEmpty) {
-        await _showNow(
-          id: _stableId('profesor_resumen_$profesorId'),
-          title: 'Tienes solicitudes pendientes',
-          body: 'Revisa las nuevas peticiones de clase en tu panel.',
-        );
-      } else {
-        for (final doc in snapshot.docs) {
-          if (known.contains(doc.id)) continue;
+          if (snapshot.docs.isNotEmpty && known.isEmpty) {
+            await _showNow(
+              id: _stableId('profesor_resumen_$profesorId'),
+              title: 'Tienes solicitudes pendientes',
+              body: 'Revisa las nuevas peticiones de clase en tu panel.',
+            );
+          } else {
+            for (final doc in snapshot.docs) {
+              if (known.contains(doc.id)) continue;
 
-          final data = doc.data();
-          await _showNow(
-            id: _stableId('solicitud_${doc.id}'),
-            title: 'Nueva solicitud de clase',
-            body:
-                '${data['alumnoNombre'] ?? 'Un alumno'} pidió ${data['materia'] ?? 'una clase'}.',
-          );
-        }
-      }
+              final data = doc.data();
+              await _showNow(
+                id: _stableId('solicitud_${doc.id}'),
+                title: 'Nueva solicitud de clase',
+                body:
+                    '${data['alumnoNombre'] ?? 'Un alumno'} pidió ${data['materia'] ?? 'una clase'}.',
+              );
+            }
+          }
 
-      await prefs.setStringList(key, currentIds.toList());
-    });
+          await prefs.setStringList(key, currentIds.toList());
+        });
   }
 
   Future<void> _scheduleClassReminders({
@@ -293,8 +282,14 @@ class NotificationService {
 
   tz.TZDateTime _nextTimeAt({required int hour, required int minute}) {
     final now = tz.TZDateTime.now(tz.local);
-    var scheduled = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour,
-        minute);
+    var scheduled = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
 
     if (!scheduled.isAfter(now)) {
       scheduled = scheduled.add(const Duration(days: 1));
@@ -305,12 +300,24 @@ class NotificationService {
 
   tz.TZDateTime _nextFirstDayOfMonth({required int hour, required int minute}) {
     final now = tz.TZDateTime.now(tz.local);
-    var scheduled =
-        tz.TZDateTime(tz.local, now.year, now.month, 1, hour, minute);
+    var scheduled = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      1,
+      hour,
+      minute,
+    );
 
     if (!scheduled.isAfter(now)) {
-      scheduled = tz.TZDateTime(tz.local, now.year, now.month + 1, 1, hour,
-          minute);
+      scheduled = tz.TZDateTime(
+        tz.local,
+        now.year,
+        now.month + 1,
+        1,
+        hour,
+        minute,
+      );
     }
 
     return scheduled;
