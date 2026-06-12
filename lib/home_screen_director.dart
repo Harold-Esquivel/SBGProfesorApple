@@ -20,6 +20,15 @@ String _rolLegible(String rol) {
   return "Alumno";
 }
 
+String _estadoUsuario(Map<String, dynamic> data) {
+  final estado = (data["estado"] ?? "activo").toString().trim().toLowerCase();
+  return estado == "inactivo" ? "inactivo" : "activo";
+}
+
+bool _usuarioActivo(Map<String, dynamic> data) {
+  return _estadoUsuario(data) == "activo";
+}
+
 class HomeDirector extends StatefulWidget {
   const HomeDirector({super.key});
 
@@ -516,7 +525,9 @@ class _SeleccionarAlumnoInformeViewState
                         }
 
                         final alumnos = snapshot.data!.docs.where((doc) {
-                          final nombre = (doc["nombre"] ?? "")
+                          final data = doc.data() as Map<String, dynamic>;
+                          if (!_usuarioActivo(data)) return false;
+                          final nombre = (data["nombre"] ?? "")
                               .toString()
                               .toLowerCase();
                           if (filtro.isEmpty) return true;
@@ -571,9 +582,7 @@ class _SeleccionarAlumnoInformeViewState
                                 decoration: BoxDecoration(
                                   color: context.appCard,
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: context.appBorder,
-                                  ),
+                                  border: Border.all(color: context.appBorder),
                                 ),
                                 child: Row(
                                   children: [
@@ -743,7 +752,10 @@ class _DirectorActionCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(subtitulo, style: TextStyle(color: context.appMutedText)),
+                  Text(
+                    subtitulo,
+                    style: TextStyle(color: context.appMutedText),
+                  ),
                 ],
               ),
             ),
@@ -881,6 +893,33 @@ class EstadisticasDirectorView extends StatelessWidget {
                               },
                             ),
                           ),
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: kPrimary,
+                                side: const BorderSide(color: kPrimary),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                              icon: const Icon(Icons.calendar_month),
+                              label: const Text("Ver horario general"),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        const HorarioGeneralProfesoresView(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -962,6 +1001,312 @@ class _BigStatCard extends StatelessWidget {
   }
 }
 
+class HorarioGeneralProfesoresView extends StatelessWidget {
+  const HorarioGeneralProfesoresView({super.key});
+
+  DateTime? _fechaClase(Map<String, dynamic> data) {
+    final fecha = data["fecha"];
+    if (fecha is Timestamp) return fecha.toDate();
+    if (fecha is DateTime) return fecha;
+    return null;
+  }
+
+  String _fechaTexto(DateTime? fecha) {
+    if (fecha == null) return "Fecha sin definir";
+    final dia = fecha.day.toString().padLeft(2, "0");
+    final mes = fecha.month.toString().padLeft(2, "0");
+    return "$dia/$mes/${fecha.year}";
+  }
+
+  int _alumnosCount(Map<String, dynamic> data) {
+    final alumnos = data["alumnosId"];
+    if (alumnos is Iterable) return alumnos.length;
+    return 0;
+  }
+
+  List<QueryDocumentSnapshot> _clasesOrdenadas(
+    List<QueryDocumentSnapshot> docs,
+  ) {
+    final clases = List<QueryDocumentSnapshot>.from(docs);
+    clases.sort((a, b) {
+      final dataA = a.data() as Map<String, dynamic>;
+      final dataB = b.data() as Map<String, dynamic>;
+      final fechaA = _fechaClase(dataA) ?? DateTime(9999);
+      final fechaB = _fechaClase(dataB) ?? DateTime(9999);
+      final porFecha = fechaA.compareTo(fechaB);
+      if (porFecha != 0) return porFecha;
+
+      final horaA = (dataA["horaInicio"] ?? "").toString();
+      final horaB = (dataB["horaInicio"] ?? "").toString();
+      return horaA.compareTo(horaB);
+    });
+    return clases;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: context.appPrimaryBackground,
+      appBar: AppBar(
+        backgroundColor: kPrimary,
+        foregroundColor: Colors.white,
+        title: const Text("Horario general"),
+      ),
+      body: Container(
+        color: context.appPrimaryBackground,
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+            child: Container(
+              decoration: BoxDecoration(
+                color: context.appPanel,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection("usuarios")
+                    .where("rol", isEqualTo: "profesor")
+                    .snapshots(),
+                builder: (context, profesoresSnap) {
+                  if (!profesoresSnap.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  final profesoresActivos = <String, String>{};
+                  for (final profesor in profesoresSnap.data!.docs) {
+                    final data = profesor.data() as Map<String, dynamic>;
+                    if (!_usuarioActivo(data)) continue;
+                    profesoresActivos[profesor.id] =
+                        (data["nombre"] ?? "Profesor").toString();
+                  }
+
+                  if (profesoresActivos.isEmpty) {
+                    return const Center(
+                      child: Text("No hay profesores activos"),
+                    );
+                  }
+
+                  return StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection("clases")
+                        .snapshots(),
+                    builder: (context, clasesSnap) {
+                      if (!clasesSnap.hasData) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      final clases = _clasesOrdenadas(
+                        clasesSnap.data!.docs.where((clase) {
+                          final data = clase.data() as Map<String, dynamic>;
+                          final profesorId = (data["profesorId"] ?? "")
+                              .toString();
+                          return profesoresActivos.containsKey(profesorId);
+                        }).toList(),
+                      );
+
+                      if (clases.isEmpty) {
+                        return const Center(
+                          child: Text("No hay clases en el horario"),
+                        );
+                      }
+
+                      return ListView.separated(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: clases.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        itemBuilder: (context, index) {
+                          final data =
+                              clases[index].data() as Map<String, dynamic>;
+                          final profesorId = (data["profesorId"] ?? "")
+                              .toString();
+                          final horaInicio = (data["horaInicio"] ?? "--:--")
+                              .toString();
+                          final horaFin = (data["horaFin"] ?? "").toString();
+                          final horario = horaFin.isEmpty
+                              ? horaInicio
+                              : "$horaInicio - $horaFin";
+
+                          return _HorarioClaseDirectorCard(
+                            fecha: _fechaTexto(_fechaClase(data)),
+                            horario: horario,
+                            materia: (data["materia"] ?? "Clase").toString(),
+                            profesor:
+                                profesoresActivos[profesorId] ?? "Profesor",
+                            estado: (data["estado"] ?? "activa").toString(),
+                            tipoClase:
+                                (data["tipoClase"] ??
+                                        data["tipo"] ??
+                                        "presencial")
+                                    .toString(),
+                            alumnos: _alumnosCount(data),
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HorarioClaseDirectorCard extends StatelessWidget {
+  final String fecha;
+  final String horario;
+  final String materia;
+  final String profesor;
+  final String estado;
+  final String tipoClase;
+  final int alumnos;
+
+  const _HorarioClaseDirectorCard({
+    required this.fecha,
+    required this.horario,
+    required this.materia,
+    required this.profesor,
+    required this.estado,
+    required this.tipoClase,
+    required this.alumnos,
+  });
+
+  Color _estadoColor(String value) {
+    switch (value.toLowerCase()) {
+      case "cancelada":
+        return Colors.red;
+      case "hecha":
+        return Colors.green;
+      case "reprogramada":
+        return const Color(0xFFF9A825);
+      default:
+        return kPrimary;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorEstado = _estadoColor(estado);
+    final tipo = tipoClase.toLowerCase() == "virtual"
+        ? "Virtual"
+        : "Presencial";
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: context.appCard,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.appBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                height: 42,
+                width: 42,
+                decoration: BoxDecoration(
+                  color: kPrimary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(Icons.calendar_month, color: kPrimary),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      materia,
+                      style: const TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      profesor,
+                      style: TextStyle(
+                        color: context.appMutedText,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: colorEstado.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: colorEstado.withValues(alpha: 0.5)),
+                ),
+                child: Text(
+                  estado,
+                  style: TextStyle(
+                    color: colorEstado,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _HorarioInfoChip(icon: Icons.event, text: fecha),
+              _HorarioInfoChip(icon: Icons.schedule, text: horario),
+              _HorarioInfoChip(icon: Icons.school, text: tipo),
+              _HorarioInfoChip(icon: Icons.groups, text: "$alumnos alumno(s)"),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HorarioInfoChip extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _HorarioInfoChip({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: context.appSoftFill,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: context.appMutedText),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: TextStyle(
+              color: context.appText,
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// ------------------------------
 /// 2) LISTA DE PROFESORES
 /// ------------------------------
@@ -998,9 +1343,14 @@ class ListaProfesoresView extends StatelessWidget {
                   if (!snap.hasData)
                     return const Center(child: CircularProgressIndicator());
 
-                  final profes = snap.data!.docs;
+                  final profes = snap.data!.docs.where((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    return _usuarioActivo(data);
+                  }).toList();
                   if (profes.isEmpty)
-                    return const Center(child: Text("No hay profesores"));
+                    return const Center(
+                      child: Text("No hay profesores activos"),
+                    );
 
                   return ListView.separated(
                     padding: const EdgeInsets.all(14),
@@ -1502,6 +1852,32 @@ class PerfilDirectorView extends StatelessWidget {
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
+                      icon: const Icon(Icons.manage_accounts),
+                      label: const Text(
+                        "Ver usuarios",
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const GestionUsuariosDirectorView(),
+                          ),
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPrimary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
                       icon: const Icon(Icons.support_agent),
                       label: const Text(
                         "Soporte",
@@ -1582,6 +1958,305 @@ class PerfilDirectorView extends StatelessWidget {
         const SnackBar(content: Text("No se pudo abrir WhatsApp")),
       );
     }
+  }
+}
+
+class GestionUsuariosDirectorView extends StatefulWidget {
+  const GestionUsuariosDirectorView({super.key});
+
+  @override
+  State<GestionUsuariosDirectorView> createState() =>
+      _GestionUsuariosDirectorViewState();
+}
+
+class _GestionUsuariosDirectorViewState
+    extends State<GestionUsuariosDirectorView> {
+  String _busqueda = "";
+  String _rolFiltro = "todos";
+  final Set<String> _actualizando = {};
+
+  List<QueryDocumentSnapshot> _filtrarUsuarios(
+    List<QueryDocumentSnapshot> docs,
+  ) {
+    final filtrados = docs.where((doc) {
+      final data = doc.data() as Map<String, dynamic>;
+      final rol = (data["rol"] ?? "").toString();
+      if (rol != "profesor" && rol != "alumno") return false;
+      if (_rolFiltro != "todos" && rol != _rolFiltro) return false;
+
+      final texto = [
+        data["nombre"],
+        data["codigo"],
+        data["email"],
+        data["telefono"],
+      ].whereType<Object>().join(" ").toLowerCase();
+
+      if (_busqueda.isEmpty) return true;
+      return texto.contains(_busqueda);
+    }).toList();
+
+    filtrados.sort((a, b) {
+      final dataA = a.data() as Map<String, dynamic>;
+      final dataB = b.data() as Map<String, dynamic>;
+      final nombreA = (dataA["nombre"] ?? "").toString().toLowerCase();
+      final nombreB = (dataB["nombre"] ?? "").toString().toLowerCase();
+      return nombreA.compareTo(nombreB);
+    });
+
+    return filtrados;
+  }
+
+  Future<void> _cambiarEstado(
+    QueryDocumentSnapshot usuario,
+    bool activo,
+  ) async {
+    final data = usuario.data() as Map<String, dynamic>;
+    final nombre = (data["nombre"] ?? "Usuario").toString();
+    final nuevoEstado = activo ? "activo" : "inactivo";
+
+    setState(() => _actualizando.add(usuario.id));
+    try {
+      await usuario.reference.update({
+        "estado": nuevoEstado,
+        "updatedAt": Timestamp.now(),
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("$nombre esta $nuevoEstado")));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("No se pudo actualizar el usuario: $e")),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _actualizando.remove(usuario.id));
+      }
+    }
+  }
+
+  Widget _filtroRolChip(String value, String label) {
+    return ChoiceChip(
+      label: Text(label),
+      selected: _rolFiltro == value,
+      selectedColor: kPrimary.withValues(alpha: 0.18),
+      labelStyle: TextStyle(
+        color: _rolFiltro == value ? kPrimary : context.appText,
+        fontWeight: FontWeight.w800,
+      ),
+      onSelected: (_) => setState(() => _rolFiltro = value),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: context.appPrimaryBackground,
+      appBar: AppBar(
+        backgroundColor: kPrimary,
+        foregroundColor: Colors.white,
+        title: const Text("Usuarios"),
+      ),
+      body: Container(
+        color: context.appPrimaryBackground,
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+            child: Container(
+              decoration: BoxDecoration(
+                color: context.appPanel,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+                    child: TextField(
+                      onChanged: (value) {
+                        setState(() => _busqueda = value.trim().toLowerCase());
+                      },
+                      decoration: InputDecoration(
+                        hintText: "Buscar usuario...",
+                        prefixIcon: const Icon(Icons.search),
+                        filled: true,
+                        fillColor: context.appInputFill,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _filtroRolChip("todos", "Todos"),
+                          _filtroRolChip("profesor", "Profesores"),
+                          _filtroRolChip("alumno", "Alumnos"),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection("usuarios")
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+
+                        final usuarios = _filtrarUsuarios(snapshot.data!.docs);
+
+                        if (usuarios.isEmpty) {
+                          return const Center(
+                            child: Text("No hay usuarios para mostrar"),
+                          );
+                        }
+
+                        return ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                          itemCount: usuarios.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 10),
+                          itemBuilder: (context, index) {
+                            final usuario = usuarios[index];
+                            final data = usuario.data() as Map<String, dynamic>;
+                            final nombre = (data["nombre"] ?? "Usuario")
+                                .toString();
+                            final rol = (data["rol"] ?? "").toString();
+                            final codigo = (data["codigo"] ?? "Sin codigo")
+                                .toString();
+                            final telefono =
+                                (data["telefono"] ?? data["contacto"] ?? "")
+                                    .toString();
+                            final activo = _usuarioActivo(data);
+                            final actualizando = _actualizando.contains(
+                              usuario.id,
+                            );
+                            final estadoColor = activo
+                                ? Colors.green
+                                : Colors.red;
+
+                            return Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: context.appCard,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: context.appBorder),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    height: 44,
+                                    width: 44,
+                                    decoration: BoxDecoration(
+                                      color: kPrimary.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    child: Icon(
+                                      rol == "profesor"
+                                          ? Icons.school
+                                          : Icons.person,
+                                      color: kPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          nombre,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          "${_rolLegible(rol)} - Codigo: $codigo",
+                                          style: TextStyle(
+                                            color: context.appMutedText,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        if (telefono.isNotEmpty) ...[
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            telefono,
+                                            style: TextStyle(
+                                              color: context.appMutedText,
+                                            ),
+                                          ),
+                                        ],
+                                        const SizedBox(height: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 5,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: estadoColor.withValues(
+                                              alpha: 0.12,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              999,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            activo ? "Activo" : "Inactivo",
+                                            style: TextStyle(
+                                              color: estadoColor,
+                                              fontWeight: FontWeight.w900,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  actualizando
+                                      ? const SizedBox(
+                                          height: 26,
+                                          width: 26,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : Switch.adaptive(
+                                          value: activo,
+                                          activeThumbColor: kPrimary,
+                                          onChanged: (value) =>
+                                              _cambiarEstado(usuario, value),
+                                        ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -1817,7 +2492,8 @@ class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
                     TextFormField(
                       controller: _codigoCtrl,
                       keyboardType: TextInputType.number,
-                      decoration: _inputDecoration(context, 
+                      decoration: _inputDecoration(
+                        context,
                         "CÃ³digo de ingreso",
                         Icons.numbers,
                       ),
@@ -1849,7 +2525,8 @@ class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
                     TextFormField(
                       controller: _passwordCtrl,
                       obscureText: true,
-                      decoration: _inputDecoration(context, 
+                      decoration: _inputDecoration(
+                        context,
                         "ContraseÃ±a",
                         Icons.lock_outline,
                       ),
@@ -1864,7 +2541,11 @@ class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
                     TextFormField(
                       controller: _telefonoCtrl,
                       keyboardType: TextInputType.phone,
-                      decoration: _inputDecoration(context, "TelÃ©fono", Icons.phone),
+                      decoration: _inputDecoration(
+                        context,
+                        "TelÃ©fono",
+                        Icons.phone,
+                      ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return "Ingresa el telÃ©fono";
@@ -1876,7 +2557,8 @@ class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
                     TextFormField(
                       controller: _apoderadoCtrl,
                       textCapitalization: TextCapitalization.words,
-                      decoration: _inputDecoration(context, 
+                      decoration: _inputDecoration(
+                        context,
                         _rol == "alumno" ? "Apoderado" : "Apoderado (opcional)",
                         Icons.family_restroom,
                       ),
@@ -2072,10 +2754,17 @@ class _CrearPagoDirectorViewState extends State<CrearPagoDirectorView> {
         .where("rol", isEqualTo: "alumno")
         .get();
 
+    if (!mounted) return;
+
+    final alumnosActivos = alumnosQuery.docs.where((doc) {
+      final data = doc.data();
+      return _usuarioActivo(data);
+    }).toList();
+
     if (_paraTodos) {
-      alumnosDocs = alumnosQuery.docs;
+      alumnosDocs = alumnosActivos;
     } else {
-      alumnosDocs = alumnosQuery.docs
+      alumnosDocs = alumnosActivos
           .where((d) => _alumnosSeleccionados.contains(d.id))
           .toList();
 
@@ -2279,7 +2968,9 @@ class _CrearPagoDirectorViewState extends State<CrearPagoDirectorView> {
                             );
 
                           final alumnos = snapshot.data!.docs.where((d) {
-                            final nombre = (d["nombre"] ?? "")
+                            final data = d.data() as Map<String, dynamic>;
+                            if (!_usuarioActivo(data)) return false;
+                            final nombre = (data["nombre"] ?? "")
                                 .toString()
                                 .toLowerCase();
                             if (_filtro.isEmpty) return true;
@@ -2384,9 +3075,12 @@ class ListaAlumnosPagosView extends StatelessWidget {
                   if (!snap.hasData)
                     return const Center(child: CircularProgressIndicator());
 
-                  final alumnos = snap.data!.docs;
+                  final alumnos = snap.data!.docs.where((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    return _usuarioActivo(data);
+                  }).toList();
                   if (alumnos.isEmpty) {
-                    return const Center(child: Text("No hay alumnos"));
+                    return const Center(child: Text("No hay alumnos activos"));
                   }
 
                   return ListView.separated(
@@ -2746,4 +3440,3 @@ class AppHeader extends StatelessWidget {
     );
   }
 }
-

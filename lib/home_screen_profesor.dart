@@ -10,6 +10,11 @@ import 'package:sbg_profesores/views/perfil_view.dart';
 import 'package:sbg_profesores/services/auth_navigation_service.dart';
 import 'package:sbg_profesores/widgets/liquid_glass_bottom_nav.dart';
 
+bool _usuarioActivo(Map<String, dynamic> data) {
+  final estado = (data["estado"] ?? "activo").toString().trim().toLowerCase();
+  return estado != "inactivo";
+}
+
 int _durToMin(String d) {
   switch (d) {
     case "45":
@@ -2085,7 +2090,9 @@ class _HomeProfesorState extends State<HomeProfesor> {
 
                             // Lista completa, pero filtrada por bÃºsqueda
                             final alumnos = snapshot.data!.docs.where((doc) {
-                              final nombre = (doc["nombre"] ?? "")
+                              final data = doc.data() as Map<String, dynamic>;
+                              if (!_usuarioActivo(data)) return false;
+                              final nombre = (data["nombre"] ?? "")
                                   .toString()
                                   .toLowerCase();
                               if (filtroAlumno.isEmpty) return true;

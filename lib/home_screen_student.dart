@@ -10,6 +10,11 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:sbg_profesores/services/auth_navigation_service.dart';
 
+bool _usuarioActivo(Map<String, dynamic> data) {
+  final estado = (data["estado"] ?? "activo").toString().trim().toLowerCase();
+  return estado != "inactivo";
+}
+
 class HomeAlumno extends StatefulWidget {
   const HomeAlumno({super.key});
 
@@ -356,7 +361,9 @@ Future<void> _mostrarModalSolicitarClase(BuildContext context) async {
                           }
 
                           final profes = snapshot.data!.docs.where((doc) {
-                            final n = (doc["nombre"] ?? "")
+                            final data = doc.data() as Map<String, dynamic>;
+                            if (!_usuarioActivo(data)) return false;
+                            final n = (data["nombre"] ?? "")
                                 .toString()
                                 .toLowerCase();
                             if (filtroProfe.isEmpty) return true;
