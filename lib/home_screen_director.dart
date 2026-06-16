@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:sbg_profesores/theme/app_theme.dart';
 import 'package:sbg_profesores/widgets/liquid_glass_bottom_nav.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -310,7 +310,7 @@ class _CrearInformeAlumnoViewState extends State<CrearInformeAlumnoView> {
 
     if (titulo.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Escribe el tÃ­tulo del informe")),
+        const SnackBar(content: Text("Escribe el titulo del informe")),
       );
       return;
     }
@@ -385,7 +385,7 @@ class _CrearInformeAlumnoViewState extends State<CrearInformeAlumnoView> {
                   TextField(
                     controller: tituloCtrl,
                     decoration: InputDecoration(
-                      hintText: "TÃ­tulo",
+                      hintText: "Título",
                       prefixIcon: const Icon(Icons.title),
                       filled: true,
                       fillColor: context.appInputFill,
@@ -649,7 +649,7 @@ class InformesDirectorSectionView extends StatelessWidget {
                 const SizedBox(height: 6),
                 const Text(
                   "Aquí puedes crear nuevos informes o revisar los informes ya enviados.",
-                  style: TextStyle(color: Colors.black54),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 22),
 
@@ -823,7 +823,7 @@ class EstadisticasDirectorView extends StatelessWidget {
                     const Text(
                       "Estadísticas generales de toda la institución.",
                       style: TextStyle(
-                        color: Colors.black54,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -1501,7 +1501,7 @@ class EstadisticasProfesorView extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Text(
-                                    "InformaciÃ³n del profesor",
+                                    "Información del profesor(@)",
                                     style: TextStyle(
                                       fontWeight: FontWeight.w900,
                                     ),
@@ -1662,10 +1662,7 @@ class PagosDirectorSectionView extends StatelessWidget {
                 const SizedBox(height: 6),
                 const Text(
                   "Elige qué deseas hacer",
-                  style: TextStyle(
-                    color: Colors.black54,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 22),
 
@@ -1906,7 +1903,7 @@ class PerfilDirectorView extends StatelessWidget {
       builder: (_) {
         return AlertDialog(
           title: const Text("Soporte"),
-          content: const Text("Elige una opciÃ³n de contacto."),
+          content: const Text("Elige una opción de contacto."),
           actions: [
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
@@ -1960,6 +1957,8 @@ class PerfilDirectorView extends StatelessWidget {
     }
   }
 }
+
+// ====== REEMPLAZA LA CLASE GestionUsuariosDirectorView Y _GestionUsuariosDirectorViewState ======
 
 class GestionUsuariosDirectorView extends StatefulWidget {
   const GestionUsuariosDirectorView({super.key});
@@ -2022,9 +2021,14 @@ class _GestionUsuariosDirectorViewState
       });
 
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("$nombre esta $nuevoEstado")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "$nombre esta $nuevoEstado",
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -2035,6 +2039,83 @@ class _GestionUsuariosDirectorViewState
         setState(() => _actualizando.remove(usuario.id));
       }
     }
+  }
+
+  /// ✅ Nuevo método para cambiar el grupo del alumno
+  Future<void> _cambiarGrupo(QueryDocumentSnapshot usuario) async {
+    final data = usuario.data() as Map<String, dynamic>;
+    final nombre = (data["nombre"] ?? "Alumno").toString();
+    final grupoActual = (data["grupo"] ?? "").toString();
+
+    final grupoCtrl = TextEditingController(text: grupoActual);
+
+    showDialog(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: Text("Cambiar grupo - $nombre"),
+          content: TextField(
+            controller: grupoCtrl,
+            decoration: InputDecoration(
+              hintText: "Ej: 306, 307, etc.",
+              prefixIcon: const Icon(Icons.class_),
+              filled: true,
+              fillColor: Colors.grey.shade100,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+            ),
+            keyboardType: TextInputType.text,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancelar"),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kPrimary,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                final nuevoGrupo = grupoCtrl.text.trim();
+
+                if (nuevoGrupo.isEmpty) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Ingresa un grupo válido")),
+                    );
+                  }
+                  return;
+                }
+
+                try {
+                  await usuario.reference.update({
+                    "grupo": nuevoGrupo,
+                    "updatedAt": Timestamp.now(),
+                  });
+
+                  if (!context.mounted) return;
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Grupo actualizado a $nuevoGrupo ✓"),
+                    ),
+                  );
+                } catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text("Error: $e")));
+                }
+              },
+              child: const Text("Guardar"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _filtroRolChip(String value, String label) {
@@ -2141,6 +2222,7 @@ class _GestionUsuariosDirectorViewState
                             final telefono =
                                 (data["telefono"] ?? data["contacto"] ?? "")
                                     .toString();
+                            final grupo = (data["grupo"] ?? "").toString();
                             final activo = _usuarioActivo(data);
                             final actualizando = _actualizando.contains(
                               usuario.id,
@@ -2148,6 +2230,7 @@ class _GestionUsuariosDirectorViewState
                             final estadoColor = activo
                                 ? Colors.green
                                 : Colors.red;
+                            final esAlumno = rol == "alumno";
 
                             return Container(
                               padding: const EdgeInsets.all(14),
@@ -2156,92 +2239,182 @@ class _GestionUsuariosDirectorViewState
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(color: context.appBorder),
                               ),
-                              child: Row(
+                              child: Column(
                                 children: [
-                                  Container(
-                                    height: 44,
-                                    width: 44,
-                                    decoration: BoxDecoration(
-                                      color: kPrimary.withValues(alpha: 0.12),
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                    child: Icon(
-                                      rol == "profesor"
-                                          ? Icons.school
-                                          : Icons.person,
-                                      color: kPrimary,
-                                    ),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        height: 44,
+                                        width: 44,
+                                        decoration: BoxDecoration(
+                                          color: kPrimary.withValues(
+                                            alpha: 0.12,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            14,
+                                          ),
+                                        ),
+                                        child: Icon(
+                                          rol == "profesor"
+                                              ? Icons.school
+                                              : Icons.person,
+                                          color: kPrimary,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              nombre,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w900,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              "${_rolLegible(rol)} - Codigo: $codigo",
+                                              style: TextStyle(
+                                                color: context.appMutedText,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                            if (telefono.isNotEmpty) ...[
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                telefono,
+                                                style: TextStyle(
+                                                  color: context.appMutedText,
+                                                ),
+                                              ),
+                                            ],
+                                            const SizedBox(height: 8),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 5,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: estadoColor.withValues(
+                                                  alpha: 0.12,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(999),
+                                              ),
+                                              child: Text(
+                                                activo ? "Activo" : "Inactivo",
+                                                style: TextStyle(
+                                                  color: estadoColor,
+                                                  fontWeight: FontWeight.w900,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      actualizando
+                                          ? const SizedBox(
+                                              height: 26,
+                                              width: 26,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                              ),
+                                            )
+                                          : Switch.adaptive(
+                                              value: activo,
+                                              activeThumbColor: kPrimary,
+                                              onChanged: (value) =>
+                                                  _cambiarEstado(
+                                                    usuario,
+                                                    value,
+                                                  ),
+                                            ),
+                                    ],
                                   ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          nombre,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w900,
+                                  // ✅ Si es alumno, mostrar el grupo y botón para editarlo
+                                  if (esAlumno) ...[
+                                    const SizedBox(height: 12),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 10,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: kPrimary.withValues(alpha: 0.08),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: kPrimary.withValues(
+                                            alpha: 0.3,
                                           ),
                                         ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          "${_rolLegible(rol)} - Codigo: $codigo",
-                                          style: TextStyle(
-                                            color: context.appMutedText,
-                                            fontWeight: FontWeight.w700,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.class_,
+                                            color: kPrimary,
+                                            size: 20,
                                           ),
-                                        ),
-                                        if (telefono.isNotEmpty) ...[
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            telefono,
-                                            style: TextStyle(
-                                              color: context.appMutedText,
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                const Text(
+                                                  "Grupo",
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.grey,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  grupo.isEmpty
+                                                      ? "Sin asignar"
+                                                      : grupo,
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w900,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          ElevatedButton.icon(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: kPrimary,
+                                              foregroundColor: Colors.white,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 8,
+                                                  ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                            ),
+                                            onPressed: () =>
+                                                _cambiarGrupo(usuario),
+                                            icon: const Icon(
+                                              Icons.edit,
+                                              size: 16,
+                                            ),
+                                            label: const Text(
+                                              "Cambiar",
+                                              style: TextStyle(fontSize: 12),
                                             ),
                                           ),
                                         ],
-                                        const SizedBox(height: 8),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 5,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: estadoColor.withValues(
-                                              alpha: 0.12,
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              999,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            activo ? "Activo" : "Inactivo",
-                                            style: TextStyle(
-                                              color: estadoColor,
-                                              fontWeight: FontWeight.w900,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  actualizando
-                                      ? const SizedBox(
-                                          height: 26,
-                                          width: 26,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        )
-                                      : Switch.adaptive(
-                                          value: activo,
-                                          activeThumbColor: kPrimary,
-                                          onChanged: (value) =>
-                                              _cambiarEstado(usuario, value),
-                                        ),
+                                  ],
                                 ],
                               ),
                             );
@@ -2932,7 +3105,7 @@ class _CrearPagoDirectorViewState extends State<CrearPagoDirectorView> {
                     },
                     title: const Text("Asignar a TODOS los alumnos"),
                     subtitle: const Text(
-                      "Si lo apagas, podrÃ¡s seleccionar alumnos especÃ­ficos",
+                      "Si lo apagas, podrás seleccionar alumnos específicos a los que se les asignará este pago.",
                     ),
                     activeColor: kPrimary,
                   ),

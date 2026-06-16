@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -553,7 +553,10 @@ class NotificacionesProfesorView extends StatelessWidget {
                     return const Center(
                       child: Text(
                         "No hay solicitudes pendientes",
-                        style: TextStyle(color: Colors.black54),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     );
                   }
@@ -774,7 +777,7 @@ class _ContenidoPerfilProfesor extends StatelessWidget {
 
                 // âœ… BIENVENIDA
                 Text(
-                  "Bienvenido profesor, $nombre",
+                  "Bienvenido profesor(@), $nombre",
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -864,7 +867,7 @@ class _ContenidoPerfilProfesor extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: const Text(
-                    "Tip: MantÃ©n tus clases hechas al dÃ­a para que el historial quede ordenado âœ…",
+                    "Tip: Mantén tus clases hechas al día para que el historial quede ordenado ...",
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -936,24 +939,73 @@ class HorarioView extends StatelessWidget {
     );
     final siguienteSemana = inicioSemana.add(const Duration(days: 7));
 
+    // ✅ Calcular si puede ir a la semana anterior (que siga siendo del mismo mes)
+    final semanaAnterior = semanaActual.subtract(const Duration(days: 7));
+    final puedeIrAtras = semanaAnterior.month == semanaActual.month;
+
+    // ✅ Calcular si puede ir a la semana siguiente (que siga siendo del mismo mes)
+    final semanaSiguiente = semanaActual.add(const Duration(days: 7));
+    final puedeIrAdelante = semanaSiguiente.month == semanaActual.month;
+
+    // ✅ Formato del mes
+    final meses = [
+      "Enero",
+      "Febrero",
+      "Marzo",
+      "Abril",
+      "Mayo",
+      "Junio",
+      "Julio",
+      "Agosto",
+      "Septiembre",
+      "Octubre",
+      "Noviembre",
+      "Diciembre",
+    ];
+    final nombreMes = meses[semanaActual.month - 1];
+
     return Column(
       children: [
         const SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            // ✅ Botón anterior (deshabilitado si sale del mes)
             IconButton(
               icon: const Icon(Icons.arrow_back_ios),
-              onPressed: () => onSemanaChange(
-                semanaActual.subtract(const Duration(days: 7)),
-                -1,
-              ),
+              onPressed: puedeIrAtras
+                  ? () => onSemanaChange(
+                      semanaActual.subtract(const Duration(days: 7)),
+                      -1,
+                    )
+                  : null,
             ),
-            Text("Semana ${_numeroSemana(semanaActual)}"),
+            // ✅ Centro: Mes y rango de fechas
+            Column(
+              children: [
+                Text(
+                  nombreMes,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "${inicioSemana.day} - ${siguienteSemana.subtract(const Duration(days: 1)).day} de $nombreMes",
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+            // ✅ Botón siguiente (deshabilitado si sale del mes)
             IconButton(
               icon: const Icon(Icons.arrow_forward_ios),
-              onPressed: () =>
-                  onSemanaChange(semanaActual.add(const Duration(days: 7)), 1),
+              onPressed: puedeIrAdelante
+                  ? () => onSemanaChange(
+                      semanaActual.add(const Duration(days: 7)),
+                      1,
+                    )
+                  : null,
             ),
           ],
         ),
@@ -986,10 +1038,10 @@ class HorarioView extends StatelessWidget {
                 final clasesPorDia = <String, List<QueryDocumentSnapshot>>{
                   "Lunes": [],
                   "Martes": [],
-                  "MiÃ©rcoles": [],
+                  "Miércoles": [],
                   "Jueves": [],
                   "Viernes": [],
-                  "SÃ¡bado": [],
+                  "Sábado": [],
                   "Domingo": [],
                 };
 
@@ -998,10 +1050,10 @@ class HorarioView extends StatelessWidget {
                   const dias = [
                     "Lunes",
                     "Martes",
-                    "MiÃ©rcoles",
+                    "Miércoles",
                     "Jueves",
                     "Viernes",
-                    "SÃ¡bado",
+                    "Sábado",
                     "Domingo",
                   ];
                   clasesPorDia[dias[fecha.weekday - 1]]!.add(clase);
@@ -1204,8 +1256,8 @@ class HorarioView extends StatelessWidget {
                       ),
                       child: Text(
                         estado == "hecha"
-                            ? "âœ… Esta clase ya estÃ¡ marcada como hecha."
-                            : "âŒ Esta clase fue cancelada.",
+                            ? "... Está clase ya est marcada como hecha."
+                            : "... Está clase fue cancelada.",
                         textAlign: TextAlign.center,
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
@@ -1803,7 +1855,6 @@ class _HomeProfesorState extends State<HomeProfesor> {
     );
   }
 
-  /// Modal crear clase (con picker iOS ruedita)
   void _mostrarModalCrearClase(BuildContext context, String profesorId) {
     String tipoClase = "presencial";
 
@@ -1815,6 +1866,7 @@ class _HomeProfesorState extends State<HomeProfesor> {
     final alumnosSeleccionados = <String>[];
 
     String filtroAlumno = "";
+    String filtroGrupo = "todos"; // ✅ NUEVO: filtro de grupo
 
     showDialog(
       context: context,
@@ -1854,7 +1906,7 @@ class _HomeProfesorState extends State<HomeProfesor> {
 
                       TextField(
                         controller: materiaController,
-                        obscureText: false, // âœ… NO es contraseÃ±a
+                        obscureText: false, // ✅ NO es contraseña
                         style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(
                           hintText: "Materia",
@@ -1924,9 +1976,7 @@ class _HomeProfesorState extends State<HomeProfesor> {
 
                       const SizedBox(height: 12),
 
-                      // Hora fin (ruedita iOS)
-                      const SizedBox(height: 12),
-
+                      // Duración
                       InkWell(
                         onTap: () async {
                           final picked = await _pickDuracion(
@@ -1952,7 +2002,7 @@ class _HomeProfesorState extends State<HomeProfesor> {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  "DuraciÃ³n: $duracion min",
+                                  "Duración: $duracion min",
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 16,
@@ -1998,7 +2048,7 @@ class _HomeProfesorState extends State<HomeProfesor> {
 
                       const SizedBox(height: 8),
 
-                      // ------- Alumnos -------
+                      // Tipo de clase
                       const SizedBox(height: 12),
 
                       Container(
@@ -2027,7 +2077,74 @@ class _HomeProfesorState extends State<HomeProfesor> {
                         ),
                       ),
 
-                      // ---------- Alumnos (lista + buscador + botÃ³n check) ----------
+                      // ✅ NUEVO: Filtro de grupos
+                      const SizedBox(height: 14),
+                      const Text(
+                        "Filtrar por grupo",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // StreamBuilder para obtener los grupos disponibles
+                      StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection("usuarios")
+                            .where("rol", isEqualTo: "alumno")
+                            .snapshots(),
+                        builder: (context, snapshot) {
+                          final gruposUnicos = <String>{"todos"};
+
+                          if (snapshot.hasData) {
+                            for (final doc in snapshot.data!.docs) {
+                              final data = doc.data() as Map<String, dynamic>;
+                              if (!_usuarioActivo(data)) continue;
+
+                              if (data.containsKey("grupo")) {
+                                final grupo = (data["grupo"] ?? "").toString();
+                                if (grupo.isNotEmpty) {
+                                  gruposUnicos.add(grupo);
+                                }
+                              }
+                            }
+                          }
+
+                          final gruposOrdenados = gruposUnicos.toList()..sort();
+
+                          return Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: gruposOrdenados.map((grupo) {
+                              final selected = filtroGrupo == grupo;
+                              return ChoiceChip(
+                                label: Text(
+                                  grupo == "todos" ? "Todos" : "Grupo $grupo",
+                                ),
+                                selected: selected,
+                                selectedColor: kPrimary,
+                                backgroundColor: Colors.grey.shade800,
+                                labelStyle: TextStyle(
+                                  color: selected
+                                      ? Colors.white
+                                      : Colors.white70,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                onSelected: (_) {
+                                  setModalState(() {
+                                    filtroGrupo = grupo;
+                                    alumnosSeleccionados.clear();
+                                  });
+                                },
+                              );
+                            }).toList(),
+                          );
+                        },
+                      ),
+
+                      // ---------- Alumnos (lista + buscador) ----------
+                      const SizedBox(height: 14),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -2054,7 +2171,7 @@ class _HomeProfesorState extends State<HomeProfesor> {
                         onChanged: (v) => setModalState(
                           () => filtroAlumno = v.trim().toLowerCase(),
                         ),
-                        obscureText: false, // âœ…
+                        obscureText: false,
                         style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(
                           hintText: "Buscar alumno...",
@@ -2088,10 +2205,21 @@ class _HomeProfesorState extends State<HomeProfesor> {
                               );
                             }
 
-                            // Lista completa, pero filtrada por bÃºsqueda
+                            // ✅ Filtrar por grupo Y por nombre
                             final alumnos = snapshot.data!.docs.where((doc) {
                               final data = doc.data() as Map<String, dynamic>;
                               if (!_usuarioActivo(data)) return false;
+
+                              // Filtrar por grupo
+                              // Filtrar por grupo
+                              if (filtroGrupo != "todos") {
+                                final grupo = data.containsKey("grupo")
+                                    ? (data["grupo"] ?? "").toString()
+                                    : "";
+                                if (grupo != filtroGrupo) return false;
+                              }
+
+                              // Filtrar por nombre
                               final nombre = (data["nombre"] ?? "")
                                   .toString()
                                   .toLowerCase();
@@ -2100,8 +2228,13 @@ class _HomeProfesorState extends State<HomeProfesor> {
                             }).toList();
 
                             if (alumnos.isEmpty) {
-                              return const Center(
-                                child: Text("No se encontrÃ³ ese alumno"),
+                              return Center(
+                                child: Text(
+                                  filtroGrupo == "todos"
+                                      ? "No se encontró ese alumno"
+                                      : "No hay alumnos en el grupo $filtroGrupo",
+                                  textAlign: TextAlign.center,
+                                ),
                               );
                             }
 
@@ -2115,6 +2248,11 @@ class _HomeProfesorState extends State<HomeProfesor> {
                                 final nombre =
                                     (alumno["nombre"] ?? "Sin nombre")
                                         .toString();
+                                final data =
+                                    alumno.data() as Map<String, dynamic>;
+                                final grupo = data.containsKey("grupo")
+                                    ? (data["grupo"] ?? "").toString()
+                                    : "";
 
                                 final seleccionado = alumnosSeleccionados
                                     .contains(id);
@@ -2122,6 +2260,12 @@ class _HomeProfesorState extends State<HomeProfesor> {
                                 return ListTile(
                                   contentPadding: EdgeInsets.zero,
                                   title: Text(nombre),
+                                  subtitle: grupo.isNotEmpty
+                                      ? Text(
+                                          "Grupo: $grupo",
+                                          style: const TextStyle(fontSize: 12),
+                                        )
+                                      : null,
                                   trailing: IconButton(
                                     onPressed: () {
                                       setModalState(() {
@@ -2152,8 +2296,7 @@ class _HomeProfesorState extends State<HomeProfesor> {
 
                       botonPrimario(
                         texto: "Guardar clase",
-
-                        icono: Icons.school, // opcional, puedes quitarlo
+                        icono: Icons.school,
                         onTap: () async {
                           if (materiaController.text.trim().isEmpty ||
                               horaInicio == null) {
@@ -2185,7 +2328,7 @@ class _HomeProfesorState extends State<HomeProfesor> {
                                 "alumnosId": alumnosSeleccionados,
                                 "asistieron": [],
                                 "estado": "activa",
-                                "tipo": tipoClase, // âœ… presencial | virtual
+                                "tipo": tipoClase,
                                 "createdAt": Timestamp.now(),
                               });
 

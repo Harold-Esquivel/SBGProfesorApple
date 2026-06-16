@@ -39,25 +39,17 @@ class LiquidGlassBottomNav extends StatefulWidget {
 }
 
 class _LiquidGlassBottomNavState extends State<LiquidGlassBottomNav> {
-  bool _expanded = true;
-
   @override
   Widget build(BuildContext context) {
     final usableWidth = MediaQuery.sizeOf(context).width > 24
         ? MediaQuery.sizeOf(context).width - 24
         : MediaQuery.sizeOf(context).width;
     final expandedWidth = usableWidth > 540 ? 540.0 : usableWidth;
-    final actionCount = widget.destinations.length + 1;
-    final collapsedTargetWidth = actionCount * 48.0 + 52.0;
-    final collapsedWidth = collapsedTargetWidth > usableWidth
-        ? usableWidth
-        : collapsedTargetWidth;
-    final barWidth = _expanded ? expandedWidth : collapsedWidth;
-    final barHeight = _expanded ? 78.0 : 58.0;
-    final radius = BorderRadius.circular(_expanded ? 34 : 29);
-    final borderColor = _alpha(Colors.white, context.isDarkMode ? 0.18 : 0.42);
-    final topGlass = _alpha(Colors.white, context.isDarkMode ? 0.16 : 0.36);
-    final bottomGlass = _alpha(Colors.white, context.isDarkMode ? 0.08 : 0.18);
+    const barHeight = 78.0;
+    const radius = BorderRadius.all(Radius.circular(32));
+
+    // Color negro un poco claro (puedes ajustar el valor según prefieras)
+    const barBackgroundColor = Color(0xFF1A1A1A); // Negro claro
 
     final actions = <_LiquidNavAction>[
       for (final destination in widget.destinations)
@@ -83,93 +75,50 @@ class _LiquidGlassBottomNavState extends State<LiquidGlassBottomNav> {
         height: barHeight,
         child: Align(
           alignment: Alignment.bottomCenter,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 280),
-            curve: Curves.easeOutCubic,
-            width: barWidth,
+          child: Container(
+            width: expandedWidth,
             height: barHeight,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: radius,
-                boxShadow: [
-                  BoxShadow(
-                    color: _alpha(
-                      Colors.black,
-                      context.isDarkMode ? 0.34 : 0.22,
+            decoration: BoxDecoration(
+              borderRadius: radius,
+              color: barBackgroundColor,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Stack(
+              children: [
+                Material(
+                  color: Colors.transparent,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 7,
                     ),
-                    blurRadius: 28,
-                    offset: const Offset(0, 14),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: radius,
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-                  child: Stack(
-                    children: [
-                      Positioned.fill(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            borderRadius: radius,
-                            border: Border.all(color: borderColor),
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [topGlass, bottomGlass],
+                    child: Row(
+                      children: [
+                        for (final action in actions)
+                          Expanded(
+                            child: _LiquidNavButton(
+                              action: action,
+                              expanded: true,
                             ),
                           ),
-                        ),
-                      ),
-                      Positioned(
-                        top: 1,
-                        left: 22,
-                        right: 22,
-                        child: Container(
-                          height: 1.2,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(999),
-                            gradient: LinearGradient(
-                              colors: [
-                                _alpha(Colors.white, 0),
-                                _alpha(Colors.white, 0.82),
-                                _alpha(Colors.white, 0),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: _expanded ? 8 : 6,
-                          vertical: 7,
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: Row(
-                            children: [
-                              for (final action in actions)
-                                Expanded(
-                                  child: _LiquidNavButton(
-                                    action: action,
-                                    expanded: _expanded,
-                                  ),
-                                ),
-                              const SizedBox(width: 4),
-                              _FoldButton(
-                                expanded: _expanded,
-                                onTap: () {
-                                  setState(() => _expanded = !_expanded);
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
+                        const SizedBox(width: 4),
+                      ],
+                    ),
                   ),
                 ),
-              ),
+                // Indicador animado
+                _AnimatedIndicator(
+                  selectedIndex: widget.currentIndex,
+                  itemCount: actions.length,
+                  barHeight: barHeight,
+                ),
+              ],
             ),
           ),
         ),
@@ -186,121 +135,115 @@ class _LiquidNavButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selectedFill = _alpha(Colors.white, context.isDarkMode ? 0.22 : 0.82);
     final iconColor = action.selected
         ? kPrimary
         : action.isLogout
-        ? _alpha(Colors.white, 0.88)
-        : _alpha(Colors.white, 0.94);
+        ? Colors.white
+        : Colors.white;
     final labelColor = action.selected
         ? Colors.white
         : action.isLogout
-        ? _alpha(Colors.white, 0.82)
-        : _alpha(Colors.white, 0.84);
+        ? Colors.white
+        : Colors.white;
 
     return Tooltip(
       message: action.label,
       child: InkWell(
         borderRadius: BorderRadius.circular(24),
         onTap: action.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOutCubic,
-          padding: EdgeInsets.symmetric(horizontal: expanded ? 3 : 0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOutCubic,
-                width: expanded ? 34 : 40,
-                height: expanded ? 34 : 40,
-                decoration: BoxDecoration(
-                  color: action.selected ? selectedFill : Colors.transparent,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: action.selected
-                        ? _alpha(Colors.white, 0.62)
-                        : _alpha(Colors.white, 0.08),
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: Icon(
-                  action.icon,
-                  color: iconColor,
-                  size: expanded ? 20 : 21,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: action.selected
+                    ? _alpha(Colors.white, 0.15)
+                    : Colors.transparent,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: action.selected
+                      ? Colors.white.withValues(alpha: 0.4)
+                      : Colors.transparent,
                 ),
               ),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 180),
-                switchInCurve: Curves.easeOutCubic,
-                switchOutCurve: Curves.easeInCubic,
-                child: expanded
-                    ? Padding(
-                        key: const ValueKey('label'),
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          action.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: labelColor,
-                            fontSize: 10,
-                            height: 1,
-                            fontWeight: action.selected
-                                ? FontWeight.w700
-                                : FontWeight.w500,
-                          ),
-                        ),
-                      )
-                    : const SizedBox.shrink(key: ValueKey('compact')),
+              alignment: Alignment.center,
+              child: Icon(action.icon, color: iconColor, size: 20),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                action.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: labelColor,
+                  fontSize: 10,
+                  height: 1,
+                  fontWeight: action.selected
+                      ? FontWeight.w700
+                      : FontWeight.w500,
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _FoldButton extends StatelessWidget {
-  const _FoldButton({required this.expanded, required this.onTap});
+class _AnimatedIndicator extends StatelessWidget {
+  const _AnimatedIndicator({
+    required this.selectedIndex,
+    required this.itemCount,
+    required this.barHeight,
+  });
 
-  final bool expanded;
-  final VoidCallback onTap;
+  final int selectedIndex;
+  final int itemCount;
+  final double barHeight;
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: expanded ? 'Plegar barra' : 'Expandir barra',
-      child: InkWell(
-        borderRadius: BorderRadius.circular(22),
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOutCubic,
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: _alpha(Colors.white, context.isDarkMode ? 0.12 : 0.24),
-            shape: BoxShape.circle,
-            border: Border.all(color: _alpha(Colors.white, 0.22)),
-          ),
-          alignment: Alignment.center,
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 160),
-            child: Icon(
-              expanded
-                  ? Icons.keyboard_arrow_down_rounded
-                  : Icons.keyboard_arrow_up_rounded,
-              key: ValueKey(expanded),
-              color: Colors.white,
-              size: 24,
+    final itemWidth = 1.0 / itemCount;
+    final selectedPosition = selectedIndex * itemWidth;
+
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      height: 3,
+      child: Stack(
+        children: [
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeOutCubic,
+            left: selectedPosition * MediaQuery.sizeOf(context).width * 0.95,
+            right:
+                (1 - selectedPosition - itemWidth) *
+                MediaQuery.sizeOf(context).width *
+                0.95,
+            bottom: 6,
+            height: 3,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(1.5),
+                color: kPrimary,
+                boxShadow: [
+                  BoxShadow(
+                    color: kPrimary.withValues(alpha: 0.6),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
