@@ -1717,182 +1717,193 @@ class PerfilDirectorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: context.appPrimaryBackground,
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: context.appPanel,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: StreamBuilder<DocumentSnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection("usuarios")
-                  .doc(directorId)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+    return Scaffold(
+      body: Stack(
+        children: [
+          Container(
+            color: context.appPrimaryBackground,
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: context.appPanel,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection("usuarios")
+                        .doc(directorId)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
 
-                final data =
-                    snapshot.data!.data() as Map<String, dynamic>? ?? {};
-                final nombre = (data["nombre"] ?? "Director").toString();
-                final contacto = (data["contacto"] ?? "â€”").toString();
+                      final data =
+                          snapshot.data!.data() as Map<String, dynamic>? ?? {};
+                      final nombre = (data["nombre"] ?? "Director").toString();
+                      final contacto = (data["contacto"] ?? "â€”").toString();
 
-                return ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    const SizedBox(height: 6),
-
-                    const SizedBox(height: 12),
-                    Text(
-                      "Bienvenido, $nombre",
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-
-                    const SizedBox(height: 6),
-                    Text(
-                      "Perfil del director",
-                      style: TextStyle(color: context.appMutedText),
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: context.appCard,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: context.appBorder),
-                      ),
-                      child: Column(
+                      return ListView(
+                        padding: const EdgeInsets.all(16),
                         children: [
-                          _DirectorInfoRow(
-                            icon: Icons.person,
-                            label: "Nombre",
-                            value: nombre,
+                          const SizedBox(height: 6),
+
+                          const SizedBox(height: 12),
+                          Text(
+                            "Bienvenido, $nombre",
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
-                          const Divider(height: 18),
-                          _DirectorInfoRow(
-                            icon: Icons.phone,
-                            label: "Contacto",
-                            value: contacto,
+
+                          const SizedBox(height: 6),
+                          Text(
+                            "Perfil del director",
+                            style: TextStyle(color: context.appMutedText),
                           ),
-                          const Divider(height: 18),
-                          const _DirectorInfoRow(
-                            icon: Icons.admin_panel_settings,
-                            label: "Rol",
-                            value: "Director",
+
+                          const SizedBox(height: 18),
+
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: context.appCard,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: context.appBorder),
+                            ),
+                            child: Column(
+                              children: [
+                                _DirectorInfoRow(
+                                  icon: Icons.person,
+                                  label: "Nombre",
+                                  value: nombre,
+                                ),
+                                const Divider(height: 18),
+                                _DirectorInfoRow(
+                                  icon: Icons.phone,
+                                  label: "Contacto",
+                                  value: contacto,
+                                ),
+                                const Divider(height: 18),
+                                const _DirectorInfoRow(
+                                  icon: Icons.admin_panel_settings,
+                                  label: "Rol",
+                                  value: "Director",
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 18),
+
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: context.appSoftFill,
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Text(
+                              "Entraste como Modo Director, aqui puedes modificar, agregar o ver todo sobre los usuarios (alumnos y profesor). Además de eso, si tienes alguna duda, ves algúm error o quieres que en la aplicación tenga una nueva actualización, puedes pedirla a nuestro contacto de soporte.",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.deepOrange,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            icon: const Icon(Icons.person_add_alt_1),
+                            label: const Text(
+                              "Crear profesor o alumno",
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      const CrearUsuarioDirectorView(),
+                                ),
+                              );
+                            },
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: kPrimary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            icon: const Icon(Icons.manage_accounts),
+                            label: const Text(
+                              "Ver usuarios",
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      const GestionUsuariosDirectorView(),
+                                ),
+                              );
+                            },
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: kPrimary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            icon: const Icon(Icons.support_agent),
+                            label: const Text(
+                              "Soporte",
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                            onPressed: () => _mostrarOpcionesSoporte(context),
                           ),
                         ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: context.appSoftFill,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: const Text(
-                        "Entraste como Modo Director, aqui puedes modificar, agregar o ver todo sobre los usuarios (alumnos y profesor). Además de eso, si tienes alguna duda, ves algúm error o quieres que en la aplicación tenga una nueva actualización, puedes pedirla a nuestro contacto de soporte.",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.deepOrange,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 13),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      icon: const Icon(Icons.person_add_alt_1),
-                      label: const Text(
-                        "Crear profesor o alumno",
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const CrearUsuarioDirectorView(),
-                          ),
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: kPrimary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 13),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      icon: const Icon(Icons.manage_accounts),
-                      label: const Text(
-                        "Ver usuarios",
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const GestionUsuariosDirectorView(),
-                          ),
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: kPrimary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 13),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      icon: const Icon(Icons.support_agent),
-                      label: const Text(
-                        "Soporte",
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      onPressed: () => _mostrarOpcionesSoporte(context),
-                    ),
-                    const Align(
-                      alignment: Alignment.centerRight,
-                      child: ThemeToggleButton(),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                );
-              },
+                      );
+                    },
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
+          Positioned(
+            bottom: 20,
+            right: 20,
+            child: FloatingActionButton(
+              onPressed: () {},
+              child: const Icon(Icons.dark_mode),
+            ),
+          ),
+        ],
       ),
     );
   }

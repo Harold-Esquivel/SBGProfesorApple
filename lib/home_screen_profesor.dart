@@ -719,163 +719,185 @@ class _ContenidoPerfilProfesor extends StatelessWidget {
         .where("profesorId", isEqualTo: profesorId)
         .snapshots();
 
-    return StreamBuilder<DocumentSnapshot>(
-      stream: profeDocStream,
-      builder: (context, profSnap) {
-        final nombre =
-            (profSnap.data?.data() as Map<String, dynamic>?)?["nombre"]
-                ?.toString() ??
-            "Profesor";
+    return Stack(
+      children: [
+        // ✅ CONTENIDO PRINCIPAL (sin el botón)
+        StreamBuilder<DocumentSnapshot>(
+          stream: profeDocStream,
+          builder: (context, profSnap) {
+            final nombre =
+                (profSnap.data?.data() as Map<String, dynamic>?)?["nombre"]
+                    ?.toString() ??
+                "Profesor";
 
-        return StreamBuilder<QuerySnapshot>(
-          stream: clasesStream,
-          builder: (context, clasesSnap) {
-            if (!clasesSnap.hasData) {
-              return const Center(child: CircularProgressIndicator());
-            }
+            return StreamBuilder<QuerySnapshot>(
+              stream: clasesStream,
+              builder: (context, clasesSnap) {
+                if (!clasesSnap.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-            final clases = clasesSnap.data!.docs;
+                final clases = clasesSnap.data!.docs;
 
-            int total = clases.length;
-            int hechas = 0;
-            int canceladas = 0;
-            int reprogramadas = 0;
-            int activas = 0;
-            int virtuales = 0;
-            int presenciales = 0;
+                int total = clases.length;
+                int hechas = 0;
+                int canceladas = 0;
+                int reprogramadas = 0;
+                int activas = 0;
+                int virtuales = 0;
+                int presenciales = 0;
 
-            for (final c in clases) {
-              final d = c.data() as Map<String, dynamic>;
+                for (final c in clases) {
+                  final d = c.data() as Map<String, dynamic>;
 
-              final estado = (d["estado"] ?? "activa").toString();
-              final tipo = (d["tipoClase"] ?? "presencial").toString();
+                  final estado = (d["estado"] ?? "activa").toString();
+                  final tipo = (d["tipoClase"] ?? "presencial").toString();
 
-              if (estado == "hecha")
-                hechas++;
-              else if (estado == "cancelada")
-                canceladas++;
-              else if (estado == "reprogramada")
-                reprogramadas++;
-              else
-                activas++;
+                  if (estado == "hecha")
+                    hechas++;
+                  else if (estado == "cancelada")
+                    canceladas++;
+                  else if (estado == "reprogramada")
+                    reprogramadas++;
+                  else
+                    activas++;
 
-              if (tipo == "virtual")
-                virtuales++;
-              else
-                presenciales++;
-            }
+                  if (tipo == "virtual")
+                    virtuales++;
+                  else
+                    presenciales++;
+                }
 
-            return ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                const SizedBox(height: 6),
-                const Align(
-                  alignment: Alignment.centerRight,
-                  child: ThemeToggleButton(),
-                ),
-                const SizedBox(height: 12),
-
-                // âœ… BIENVENIDA
-                Text(
-                  "Bienvenido profesor(@), $nombre",
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  "Tu resumen/estadistica de clases",
-                  style: TextStyle(color: context.appMutedText),
-                ),
-
-                // âœ… TARJETAS (2 columnas)
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 1.25,
+                return ListView(
+                  padding: const EdgeInsets.all(16),
                   children: [
-                    _StatCard(
-                      titulo: "Total clases",
-                      valor: "$total",
-                      icono: Icons.calendar_month,
-                      borderColor: const Color.fromARGB(255, 93, 97, 231),
-                      bgColor: Color(0xFFF3E5F5),
-                      iconColor: const Color.fromARGB(255, 63, 68, 211),
+                    const SizedBox(height: 6),
+                    // ✅ REMOVIDO: Align con ThemeToggleButton()
+                    const SizedBox(height: 12),
+
+                    // âœ… BIENVENIDA
+                    Text(
+                      "Bienvenido profesor(@), $nombre",
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                    _StatCard(
-                      titulo: "Activas",
-                      valor: "$activas",
-                      icono: Icons.play_circle_fill,
-                      borderColor: const Color.fromARGB(255, 93, 97, 231),
-                      bgColor: Color(0xFFF3E5F5),
-                      iconColor: const Color.fromARGB(255, 63, 68, 211),
+                    const SizedBox(height: 6),
+                    Text(
+                      "Tu resumen/estadistica de clases",
+                      style: TextStyle(color: context.appMutedText),
                     ),
-                    _StatCard(
-                      titulo: "Hechas",
-                      valor: "$hechas",
-                      icono: Icons.check_circle,
-                      borderColor: const Color(0xFF4CAF50),
-                      bgColor: const Color(0xFFE8F5E9),
-                      iconColor: const Color(0xFF2E7D32),
+
+                    // âœ… TARJETAS (2 columnas)
+                    GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 1.25,
+                      children: [
+                        _StatCard(
+                          titulo: "Total clases",
+                          valor: "$total",
+                          icono: Icons.calendar_month,
+                          borderColor: const Color.fromARGB(255, 93, 97, 231),
+                          bgColor: Color(0xFFF3E5F5),
+                          iconColor: const Color.fromARGB(255, 63, 68, 211),
+                        ),
+                        _StatCard(
+                          titulo: "Activas",
+                          valor: "$activas",
+                          icono: Icons.play_circle_fill,
+                          borderColor: const Color.fromARGB(255, 93, 97, 231),
+                          bgColor: Color(0xFFF3E5F5),
+                          iconColor: const Color.fromARGB(255, 63, 68, 211),
+                        ),
+                        _StatCard(
+                          titulo: "Hechas",
+                          valor: "$hechas",
+                          icono: Icons.check_circle,
+                          borderColor: const Color(0xFF4CAF50),
+                          bgColor: const Color(0xFFE8F5E9),
+                          iconColor: const Color(0xFF2E7D32),
+                        ),
+                        _StatCard(
+                          titulo: "Canceladas",
+                          valor: "$canceladas",
+                          icono: Icons.cancel,
+                          borderColor: const Color(0xFFE57373),
+                          bgColor: const Color(0xFFFFEBEE),
+                          iconColor: const Color(0xFFC62828),
+                        ),
+                        _StatCard(
+                          titulo: "Reprogramadas",
+                          valor: "$reprogramadas",
+                          icono: Icons.warning_amber_rounded,
+                          borderColor: const Color(0xFFFFEE58),
+                          bgColor: const Color(0xFFFFF9C4),
+                          iconColor: const Color(0xFFF9A825),
+                        ),
+                        _StatCard(
+                          titulo: "Virtuales",
+                          valor: "$virtuales",
+                          icono: Icons.laptop,
+                          borderColor: const Color.fromARGB(255, 93, 97, 231),
+                          bgColor: Color(0xFFF3E5F5),
+                          iconColor: const Color.fromARGB(255, 63, 68, 211),
+                        ),
+                        _StatCard(
+                          titulo: "Presenciales",
+                          valor: "$presenciales",
+                          icono: Icons.school,
+                          borderColor: const Color.fromARGB(255, 93, 97, 231),
+                          bgColor: Color(0xFFF3E5F5),
+                          iconColor: const Color.fromARGB(255, 63, 68, 211),
+                        ),
+                      ],
                     ),
-                    _StatCard(
-                      titulo: "Canceladas",
-                      valor: "$canceladas",
-                      icono: Icons.cancel,
-                      borderColor: const Color(0xFFE57373),
-                      bgColor: const Color(0xFFFFEBEE),
-                      iconColor: const Color(0xFFC62828),
-                    ),
-                    _StatCard(
-                      titulo: "Reprogramadas",
-                      valor: "$reprogramadas",
-                      icono: Icons.warning_amber_rounded,
-                      borderColor: const Color(0xFFFFEE58),
-                      bgColor: const Color(0xFFFFF9C4),
-                      iconColor: const Color(0xFFF9A825),
-                    ),
-                    _StatCard(
-                      titulo: "Virtuales",
-                      valor: "$virtuales",
-                      icono: Icons.laptop,
-                      borderColor: const Color.fromARGB(255, 93, 97, 231),
-                      bgColor: Color(0xFFF3E5F5),
-                      iconColor: const Color.fromARGB(255, 63, 68, 211),
-                    ),
-                    _StatCard(
-                      titulo: "Presenciales",
-                      valor: "$presenciales",
-                      icono: Icons.school,
-                      borderColor: const Color.fromARGB(255, 93, 97, 231),
-                      bgColor: Color(0xFFF3E5F5),
-                      iconColor: const Color.fromARGB(255, 63, 68, 211),
+
+                    const SizedBox(height: 18),
+
+                    // âœ… BLOQUE EXTRA (opcional)
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Text(
+                        "Tip: Mantén tus clases hechas al día para que el historial quede ordenado ...",
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
                     ),
                   ],
-                ),
-
-                const SizedBox(height: 18),
-
-                // âœ… BLOQUE EXTRA (opcional)
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Text(
-                    "Tip: Mantén tus clases hechas al día para que el historial quede ordenado ...",
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ],
+                );
+              },
             );
           },
-        );
-      },
+        ),
+
+        // ✅ BOTÓN FLOTANTE EN ESQUINA DERECHA
+        Positioned(
+          top: 520,
+          right: 22,
+          child: Container(
+            decoration: BoxDecoration(
+              color: context.appCard,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: const ThemeToggleButton(),
+          ),
+        ),
+      ],
     );
   }
 }
