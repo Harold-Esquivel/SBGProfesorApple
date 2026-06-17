@@ -149,7 +149,7 @@ Future<void> _mostrarModalSolicitarClase(BuildContext context) async {
                       controller: materiaController,
                       style: const TextStyle(color: Colors.white),
                       decoration: darkInput(
-                        hint: "Materia (ej: MatemÃ¡tica)",
+                        hint: "Materia (ej: Quimica)",
                         icon: Icons.book,
                       ),
                     ),
@@ -260,7 +260,7 @@ Future<void> _mostrarModalSolicitarClase(BuildContext context) async {
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                "DuraciÃ³n: ${duracion} min",
+                                "Duración: ${duracion} min",
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 16,
@@ -557,7 +557,7 @@ class _HomeAlumnoState extends State<HomeAlumno> {
       ),
       floatingActionButton: (_currentIndex == 0)
           ? FloatingActionButton(
-              backgroundColor: kPrimary, // o el color que uses en la app
+              backgroundColor: kPrimary,
               onPressed: () => _mostrarModalSolicitarClase(context),
               child: const Icon(Icons.add, color: Colors.white, size: 34),
             )
@@ -711,26 +711,76 @@ class _HorarioAlumnoViewState extends State<HorarioAlumnoView> {
     );
     final siguienteSemana = inicioSemana.add(const Duration(days: 7));
 
+    // ✅ Nombres de meses
+    const meses = [
+      "Enero",
+      "Febrero",
+      "Marzo",
+      "Abril",
+      "Mayo",
+      "Junio",
+      "Julio",
+      "Agosto",
+      "Septiembre",
+      "Octubre",
+      "Noviembre",
+      "Diciembre",
+    ];
+    final nombreMes = meses[widget.semanaActual.month - 1];
+    final mesActual = DateTime.now().month;
+    final anioActual = DateTime.now().year;
+
+    // ✅ Verificar si puede ir atrás (mismo mes)
+    final puedeIrAtras =
+        inicioSemana.month == mesActual && inicioSemana.year == anioActual;
+
+    // ✅ Verificar si puede ir adelante (mismo mes)
+    final puedeIrAdelante =
+        siguienteSemana.month == mesActual &&
+        siguienteSemana.year == anioActual;
+
     return Column(
       children: [
         const SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            // ✅ Botón atrás (deshabilitado si sale del mes)
             IconButton(
               icon: const Icon(Icons.arrow_back_ios),
-              onPressed: () => widget.onSemanaChange(
-                widget.semanaActual.subtract(const Duration(days: 7)),
-                -1,
-              ),
+              onPressed: puedeIrAtras
+                  ? () => widget.onSemanaChange(
+                      widget.semanaActual.subtract(const Duration(days: 7)),
+                      -1,
+                    )
+                  : null,
             ),
-            Text("Semana ${_numeroSemana(widget.semanaActual)}"),
+            // ✅ Centro: Mes y rango de fechas
+            Column(
+              children: [
+                Text(
+                  nombreMes,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "${inicioSemana.day} - ${siguienteSemana.subtract(const Duration(days: 1)).day} de $nombreMes",
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+            // ✅ Botón adelante (deshabilitado si sale del mes)
             IconButton(
               icon: const Icon(Icons.arrow_forward_ios),
-              onPressed: () => widget.onSemanaChange(
-                widget.semanaActual.add(const Duration(days: 7)),
-                1,
-              ),
+              onPressed: puedeIrAdelante
+                  ? () => widget.onSemanaChange(
+                      widget.semanaActual.add(const Duration(days: 7)),
+                      1,
+                    )
+                  : null,
             ),
           ],
         ),
@@ -763,10 +813,10 @@ class _HorarioAlumnoViewState extends State<HorarioAlumnoView> {
                 final clasesPorDia = <String, List<QueryDocumentSnapshot>>{
                   "Lunes": [],
                   "Martes": [],
-                  "MiÃ©rcoles": [],
+                  "Miércoles": [],
                   "Jueves": [],
                   "Viernes": [],
-                  "SÃ¡bado": [],
+                  "Sábado": [],
                   "Domingo": [],
                 };
 
@@ -775,10 +825,10 @@ class _HorarioAlumnoViewState extends State<HorarioAlumnoView> {
                   const dias = [
                     "Lunes",
                     "Martes",
-                    "MiÃ©rcoles",
+                    "Miércoles",
                     "Jueves",
                     "Viernes",
-                    "SÃ¡bado",
+                    "Sábado",
                     "Domingo",
                   ];
                   clasesPorDia[dias[fecha.weekday - 1]]!.add(clase);
@@ -1527,7 +1577,7 @@ class PerfilAlumnoView extends StatelessWidget {
                   final data = snapshot.data?.data() as Map<String, dynamic>?;
                   if (data == null) {
                     return const Center(
-                      child: Text("No se encontrÃ³ el perfil del alumno"),
+                      child: Text("No se encontro el perfil del alumno"),
                     );
                   }
 
@@ -1542,113 +1592,136 @@ class PerfilAlumnoView extends StatelessWidget {
                       final inasistencias =
                           statsSnap.data?["inasistencias"] ?? 0;
 
-                      return ListView(
-                        padding: const EdgeInsets.all(16),
+                      return Stack(
                         children: [
-                          const SizedBox(height: 6),
-                          const Align(
-                            alignment: Alignment.centerRight,
-                            child: ThemeToggleButton(),
-                          ),
-                          const SizedBox(height: 12),
-
-                          Text(
-                            "Bienvenido alumno, $nombre",
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            "Tu Información",
-                            style: TextStyle(color: context.appMutedText),
-                          ),
-
-                          GridView.count(
-                            crossAxisCount: 2,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            mainAxisSpacing: 12,
-                            crossAxisSpacing: 12,
-                            childAspectRatio: 1.35,
+                          // ✅ CONTENIDO PRINCIPAL
+                          ListView(
+                            padding: const EdgeInsets.all(16),
                             children: [
-                              _StatCard(
-                                titulo: "Asistencias",
-                                valor: "$asistencias",
-                                icono: Icons.check_circle,
-                                borderColor: const Color(0xFF4CAF50), // verde
-                                bgColor: const Color(
-                                  0xFFE8F5E9,
-                                ), // verde pastel
-                                iconColor: const Color(
-                                  0xFF2E7D32,
-                                ), // verde fuerte
+                              const SizedBox(height: 6),
+                              const SizedBox(height: 12),
+
+                              Text(
+                                "Bienvenido alumno, $nombre",
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w900,
+                                ),
                               ),
-                              _StatCard(
-                                titulo: "Inasistencias",
-                                valor: "$inasistencias",
-                                icono: Icons.cancel,
-                                borderColor: const Color(0xFFE57373),
-                                bgColor: const Color(0xFFFFEBEE),
-                                iconColor: const Color(0xFFC62828),
+                              const SizedBox(height: 6),
+                              Text(
+                                "Tu Información",
+                                style: TextStyle(color: context.appMutedText),
+                              ),
+
+                              GridView.count(
+                                crossAxisCount: 2,
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                mainAxisSpacing: 12,
+                                crossAxisSpacing: 12,
+                                childAspectRatio: 1.35,
+                                children: [
+                                  _StatCard(
+                                    titulo: "Asistencias",
+                                    valor: "$asistencias",
+                                    icono: Icons.check_circle,
+                                    borderColor: const Color(
+                                      0xFF4CAF50,
+                                    ), // verde
+                                    bgColor: const Color(
+                                      0xFFE8F5E9,
+                                    ), // verde pastel
+                                    iconColor: const Color(
+                                      0xFF2E7D32,
+                                    ), // verde fuerte
+                                  ),
+                                  _StatCard(
+                                    titulo: "Inasistencias",
+                                    valor: "$inasistencias",
+                                    icono: Icons.cancel,
+                                    borderColor: const Color(0xFFE57373),
+                                    bgColor: const Color(0xFFFFEBEE),
+                                    iconColor: const Color(0xFFC62828),
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              // ✅ Tarjeta info personal
+                              Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: context.appCard,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: context.appBorder),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: context.appShadow,
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 6),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  children: [
+                                    _PerfilInfoRow(
+                                      icon: Icons.person,
+                                      label: "Nombre completo",
+                                      value: nombre,
+                                    ),
+                                    const Divider(height: 18),
+                                    _PerfilInfoRow(
+                                      icon: Icons.badge,
+                                      label: "Apoderado",
+                                      value: apoderado,
+                                    ),
+                                    const Divider(height: 18),
+                                    _PerfilInfoRow(
+                                      icon: Icons.phone,
+                                      label: "Contacto",
+                                      value: contacto,
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              const SizedBox(height: 16),
+
+                              Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: context.appSoftFill,
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: const Text(
+                                  "Si algún dato está mal, avisa a administración para que lo actualicen.",
+                                  style: TextStyle(fontWeight: FontWeight.w600),
+                                ),
                               ),
                             ],
                           ),
 
-                          const SizedBox(height: 16),
-
-                          // âœ… Tarjeta info personal
-                          Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: context.appCard,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: context.appBorder),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: context.appShadow,
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              children: [
-                                _PerfilInfoRow(
-                                  icon: Icons.person,
-                                  label: "Nombre completo",
-                                  value: nombre,
-                                ),
-                                const Divider(height: 18),
-                                _PerfilInfoRow(
-                                  icon: Icons.badge,
-                                  label: "Apoderado",
-                                  value: apoderado,
-                                ),
-                                const Divider(height: 18),
-                                _PerfilInfoRow(
-                                  icon: Icons.phone,
-                                  label: "Contacto",
-                                  value: contacto,
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          const SizedBox(height: 16),
-
-                          Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: context.appSoftFill,
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: const Text(
-                              "Si algÃºn dato estÃ¡ mal, avisa a administraciÃ³n para que lo actualicen.",
-                              style: TextStyle(fontWeight: FontWeight.w600),
+                          // ✅ BOTÓN FLOTANTE EN ESQUINA DERECHA
+                          Positioned(
+                            top: 500,
+                            right: 22,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: context.appCard,
+                                borderRadius: BorderRadius.circular(14),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.15),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: const ThemeToggleButton(),
                             ),
                           ),
                         ],

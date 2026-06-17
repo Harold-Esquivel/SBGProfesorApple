@@ -39,7 +39,7 @@ class HomeDirector extends StatefulWidget {
 class _HomeDirectorState extends State<HomeDirector> {
   int _currentIndex = 3;
 
-  // ---- TÃ­tulo dinÃ¡mico para el header ----
+  // ---- Título dinámico para el header ----
   String _tituloActual() {
     switch (_currentIndex) {
       case 0:
@@ -75,7 +75,7 @@ class _HomeDirectorState extends State<HomeDirector> {
       backgroundColor: context.appPrimaryBackground,
       body: Column(
         children: [
-          // âœ… Header como tu profesor (si ya tienes AppHeader, Ãºsalo)
+          // ✅ Header como tu profesor (si ya tienes AppHeader, úsalo)
           AppHeader(titulo: _tituloActual()),
 
           Expanded(child: paginas[_currentIndex]),
@@ -149,7 +149,7 @@ class ListaInformesAlumnoDirectorView extends StatelessWidget {
     final uri = Uri.tryParse(url);
     if (uri == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("La URL del informe es invÃ¡lida")),
+        const SnackBar(content: Text("La URL del informe es inválida")),
       );
       return;
     }
@@ -264,7 +264,7 @@ class ListaInformesAlumnoDirectorView extends StatelessWidget {
                                     const SizedBox(height: 4),
                                     Text(
                                       fecha == null
-                                          ? "Fecha: â€”"
+                                          ? "Fecha: –"
                                           : "Fecha: ${fecha.day.toString().padLeft(2, "0")}/${fecha.month.toString().padLeft(2, "0")}/${fecha.year}",
                                       style: TextStyle(
                                         color: context.appMutedText,
@@ -339,7 +339,7 @@ class _CrearInformeAlumnoViewState extends State<CrearInformeAlumnoView> {
 
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text("Informe enviado âœ…")));
+    ).showSnackBar(const SnackBar(content: Text("Informe enviado ✓")));
 
     Navigator.pop(context);
   }
@@ -536,7 +536,7 @@ class _SeleccionarAlumnoInformeViewState
 
                         if (alumnos.isEmpty) {
                           return const Center(
-                            child: Text("No se encontrÃ³ ningÃºn alumno"),
+                            child: Text("No se encontró ningún alumno"),
                           );
                         }
 
@@ -830,7 +830,7 @@ class EstadisticasDirectorView extends StatelessWidget {
 
                     const SizedBox(height: 16),
 
-                    // âœ… 2 cuadros grandes
+                    // ✅ 2 cuadros grandes
                     _BigStatCard(
                       titulo: "Clases hechas (total)",
                       valor: "$hechas",
@@ -853,7 +853,7 @@ class EstadisticasDirectorView extends StatelessWidget {
 
                     const SizedBox(height: 20),
 
-                    // âœ… Texto + botÃ³n
+                    // ✅ Texto + botón
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
@@ -1476,7 +1476,7 @@ class EstadisticasProfesorView extends StatelessWidget {
                     children: [
                       const SizedBox(height: 6),
 
-                      // âœ… INFO PROFESOR
+                      // ✅ INFO PROFESOR
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
@@ -1687,7 +1687,7 @@ class PagosDirectorSectionView extends StatelessWidget {
                       _BigActionCard(
                         title: "Ver pagos",
                         subtitle:
-                            "Lista de alumnos â†’ ver pagos pendientes/atrasados",
+                            "Lista de alumnos → ver pagos pendientes/atrasados",
                         icon: Icons.search,
                         onTap: () {
                           Navigator.push(
@@ -1717,193 +1717,201 @@ class PerfilDirectorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            color: context.appPrimaryBackground,
-            child: SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: context.appPanel,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: StreamBuilder<DocumentSnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection("usuarios")
-                        .doc(directorId)
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
+    return Container(
+      color: context.appPrimaryBackground,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+          child: Container(
+            decoration: BoxDecoration(
+              color: context.appPanel,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Stack(
+              children: [
+                StreamBuilder<DocumentSnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection("usuarios")
+                      .doc(directorId)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-                      final data =
-                          snapshot.data!.data() as Map<String, dynamic>? ?? {};
-                      final nombre = (data["nombre"] ?? "Director").toString();
-                      final contacto = (data["contacto"] ?? "â€”").toString();
+                    final data =
+                        snapshot.data!.data() as Map<String, dynamic>? ?? {};
+                    final nombre = (data["nombre"] ?? "Director").toString();
+                    final contacto = (data["contacto"] ?? "–").toString();
 
-                      return ListView(
-                        padding: const EdgeInsets.all(16),
-                        children: [
-                          const SizedBox(height: 6),
+                    return ListView(
+                      padding: const EdgeInsets.all(16),
+                      children: [
+                        const SizedBox(height: 6),
 
-                          const SizedBox(height: 12),
-                          Text(
-                            "Bienvenido, $nombre",
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
+                        const SizedBox(height: 12),
+                        Text(
+                          "Bienvenido, $nombre",
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+
+                        const SizedBox(height: 6),
+                        Text(
+                          "Perfil del director",
+                          style: TextStyle(color: context.appMutedText),
+                        ),
+
+                        const SizedBox(height: 18),
+
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: context.appCard,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: context.appBorder),
+                          ),
+                          child: Column(
+                            children: [
+                              _DirectorInfoRow(
+                                icon: Icons.person,
+                                label: "Nombre",
+                                value: nombre,
+                              ),
+                              const Divider(height: 18),
+                              _DirectorInfoRow(
+                                icon: Icons.phone,
+                                label: "Contacto",
+                                value: contacto,
+                              ),
+                              const Divider(height: 18),
+                              const _DirectorInfoRow(
+                                icon: Icons.admin_panel_settings,
+                                label: "Rol",
+                                value: "Director",
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 18),
+
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: context.appSoftFill,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Text(
+                            "Entraste como Modo Director, aqui puedes modificar, agregar o ver todo sobre los usuarios (alumnos y profesor). Además de eso, si tienes alguna duda, ves algúm error o quieres que en la aplicación tenga una nueva actualización, puedes pedirla a nuestro contacto de soporte.",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              height: 1.4,
                             ),
                           ),
+                        ),
 
-                          const SizedBox(height: 6),
-                          Text(
-                            "Perfil del director",
-                            style: TextStyle(color: context.appMutedText),
-                          ),
+                        const SizedBox(height: 16),
 
-                          const SizedBox(height: 18),
-
-                          Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: context.appCard,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: context.appBorder),
-                            ),
-                            child: Column(
-                              children: [
-                                _DirectorInfoRow(
-                                  icon: Icons.person,
-                                  label: "Nombre",
-                                  value: nombre,
-                                ),
-                                const Divider(height: 18),
-                                _DirectorInfoRow(
-                                  icon: Icons.phone,
-                                  label: "Contacto",
-                                  value: contacto,
-                                ),
-                                const Divider(height: 18),
-                                const _DirectorInfoRow(
-                                  icon: Icons.admin_panel_settings,
-                                  label: "Rol",
-                                  value: "Director",
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 18),
-
-                          Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: context.appSoftFill,
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.deepOrange,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
                             ),
-                            child: const Text(
-                              "Entraste como Modo Director, aqui puedes modificar, agregar o ver todo sobre los usuarios (alumnos y profesor). Además de eso, si tienes alguna duda, ves algúm error o quieres que en la aplicación tenga una nueva actualización, puedes pedirla a nuestro contacto de soporte.",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                height: 1.4,
+                          ),
+                          icon: const Icon(Icons.person_add_alt_1),
+                          label: const Text(
+                            "Crear profesor o alumno",
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const CrearUsuarioDirectorView(),
                               ),
+                            );
+                          },
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPrimary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
                             ),
                           ),
-
-                          const SizedBox(height: 16),
-
-                          ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.deepOrange,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 13),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                            icon: const Icon(Icons.person_add_alt_1),
-                            label: const Text(
-                              "Crear profesor o alumno",
-                              style: TextStyle(fontWeight: FontWeight.w700),
-                            ),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      const CrearUsuarioDirectorView(),
-                                ),
-                              );
-                            },
+                          icon: const Icon(Icons.manage_accounts),
+                          label: const Text(
+                            "Ver usuarios",
+                            style: TextStyle(fontWeight: FontWeight.w700),
                           ),
-
-                          const SizedBox(height: 12),
-
-                          ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: kPrimary,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 13),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const GestionUsuariosDirectorView(),
                               ),
-                            ),
-                            icon: const Icon(Icons.manage_accounts),
-                            label: const Text(
-                              "Ver usuarios",
-                              style: TextStyle(fontWeight: FontWeight.w700),
-                            ),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      const GestionUsuariosDirectorView(),
-                                ),
-                              );
-                            },
-                          ),
+                            );
+                          },
+                        ),
 
-                          const SizedBox(height: 12),
+                        const SizedBox(height: 12),
 
-                          ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: kPrimary,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 13),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPrimary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
                             ),
-                            icon: const Icon(Icons.support_agent),
-                            label: const Text(
-                              "Soporte",
-                              style: TextStyle(fontWeight: FontWeight.w700),
-                            ),
-                            onPressed: () => _mostrarOpcionesSoporte(context),
                           ),
-                        ],
-                      );
-                    },
+                          icon: const Icon(Icons.support_agent),
+                          label: const Text(
+                            "Soporte",
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          onPressed: () => _mostrarOpcionesSoporte(context),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                Positioned(
+                  bottom: 16,
+                  right: 16,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: context.appCard,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const ThemeToggleButton(),
                   ),
                 ),
-              ),
+              ],
             ),
           ),
-          Positioned(
-            bottom: 20,
-            right: 20,
-            child: FloatingActionButton(
-              onPressed: () {},
-              child: const Icon(Icons.dark_mode),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -2533,7 +2541,7 @@ class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            "${_rolLegible(_rol)} creado correctamente. CÃ³digo: $codigo",
+            "${_rolLegible(_rol)} creado correctamente. Código: $codigo",
           ),
         ),
       );
@@ -2549,11 +2557,11 @@ class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
       String mensaje = "No se pudo crear el usuario.";
 
       if (e.code == "email-already-in-use") {
-        mensaje = "Ese cÃ³digo ya estÃ¡ registrado.";
+        mensaje = "Ese código ya está registrado.";
       } else if (e.code == "weak-password") {
-        mensaje = "La contraseÃ±a debe tener al menos 6 caracteres.";
+        mensaje = "La contraseña debe tener al menos 6 caracteres.";
       } else if (e.code == "invalid-email") {
-        mensaje = "El cÃ³digo generado no es vÃ¡lido.";
+        mensaje = "El código generado no es válido.";
       }
 
       if (!mounted) return;
@@ -2630,7 +2638,7 @@ class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      "Crea su cuenta, contraseÃ±a y datos principales para que luego pueda iniciar sesiÃ³n con su cÃ³digo.",
+                      "Crea su cuenta, contraseña y datos principales para que luego pueda iniciar sesión con su código.",
                       style: TextStyle(color: Colors.black54, height: 1.35),
                     ),
                     const SizedBox(height: 18),
@@ -2678,15 +2686,15 @@ class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
                       keyboardType: TextInputType.number,
                       decoration: _inputDecoration(
                         context,
-                        "CÃ³digo de ingreso",
+                        "Código de ingreso",
                         Icons.numbers,
                       ),
                       onChanged: (_) => setState(() {}),
                       validator: (value) {
                         final limpio = value?.trim() ?? "";
-                        if (limpio.isEmpty) return "Ingresa el cÃ³digo";
+                        if (limpio.isEmpty) return "Ingresa el código";
                         if (limpio.contains(" "))
-                          return "El cÃ³digo no debe tener espacios";
+                          return "El código no debe tener espacios";
                         return null;
                       },
                     ),
@@ -2711,13 +2719,13 @@ class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
                       obscureText: true,
                       decoration: _inputDecoration(
                         context,
-                        "ContraseÃ±a",
+                        "Contraseña",
                         Icons.lock_outline,
                       ),
                       validator: (value) {
                         final limpio = value?.trim() ?? "";
-                        if (limpio.isEmpty) return "Ingresa la contraseÃ±a";
-                        if (limpio.length < 6) return "MÃ­nimo 6 caracteres";
+                        if (limpio.isEmpty) return "Ingresa la contraseña";
+                        if (limpio.length < 6) return "Mínimo 6 caracteres";
                         return null;
                       },
                     ),
@@ -2727,12 +2735,12 @@ class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
                       keyboardType: TextInputType.phone,
                       decoration: _inputDecoration(
                         context,
-                        "TelÃ©fono",
+                        "Teléfono",
                         Icons.phone,
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return "Ingresa el telÃ©fono";
+                          return "Ingresa el teléfono";
                         }
                         return null;
                       },
@@ -2924,7 +2932,7 @@ class _CrearPagoDirectorViewState extends State<CrearPagoDirectorView> {
     if (monto <= 0) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Monto invÃ¡lido")));
+      ).showSnackBar(const SnackBar(content: Text("Monto inválido")));
       return;
     }
 
@@ -2962,7 +2970,7 @@ class _CrearPagoDirectorViewState extends State<CrearPagoDirectorView> {
       }
     }
 
-    // 2) Crear pagos en batch (Firestore tiene lÃ­mite 500 escrituras por batch)
+    // 2) Crear pagos en batch (Firestore tiene límite 500 escrituras por batch)
     final now = Timestamp.now();
     final vencTs = Timestamp.fromDate(_vencimiento);
 
@@ -3006,7 +3014,7 @@ class _CrearPagoDirectorViewState extends State<CrearPagoDirectorView> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text("Pago creado âœ… (${alumnosDocs.length} alumno(s))"),
+        content: Text("Pago creado ✓ (${alumnosDocs.length} alumno(s))"),
       ),
     );
     Navigator.pop(context);
@@ -3224,7 +3232,7 @@ class _CrearPagoDirectorViewState extends State<CrearPagoDirectorView> {
 }
 
 /// ------------------------------
-/// 3) VER PAGOS â†’ LISTA DE ALUMNOS
+/// 3) VER PAGOS → LISTA DE ALUMNOS
 /// ------------------------------
 class ListaAlumnosPagosView extends StatelessWidget {
   const ListaAlumnosPagosView({super.key});
@@ -3331,7 +3339,7 @@ class ListaAlumnosPagosView extends StatelessWidget {
 /// ------------------------------
 /// 4) PAGOS DEL ALUMNO (DIRECTOR)
 ///     Tabs: Pendientes / Atrasados
-///     BotÃ³n: Marcar pagado
+///     Botón: Marcar pagado
 /// ------------------------------
 class PagosAlumnoDirectorView extends StatelessWidget {
   final String alumnoId;
@@ -3375,7 +3383,7 @@ class PagosAlumnoDirectorView extends StatelessWidget {
     if (!context.mounted) return;
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text("Marcado como pagado âœ…")));
+    ).showSnackBar(const SnackBar(content: Text("Marcado como pagado ✓")));
   }
 
   @override
@@ -3413,10 +3421,18 @@ class PagosAlumnoDirectorView extends StatelessWidget {
                       child: TabBar(
                         indicator: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(9),
                         ),
                         labelColor: Colors.black,
                         unselectedLabelColor: Colors.black54,
+                        labelStyle: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        unselectedLabelStyle: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
                         tabs: const [
                           Tab(text: "Pendientes"),
                           Tab(text: "Atrasados"),
@@ -3482,8 +3498,9 @@ class PagosAlumnoDirectorView extends StatelessWidget {
       return Center(
         child: Text(
           isAtrasados ? "No tiene atrasados" : "No tiene pendientes",
-          style: const TextStyle(
-            color: Colors.black54,
+          style: TextStyle(
+            color: context.appMutedText,
+            fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -3540,7 +3557,7 @@ class PagosAlumnoDirectorView extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      "Vence: ${venc == null ? "â€”" : _fmtFecha(venc)}",
+                      "Vence: ${venc == null ? "–" : _fmtFecha(venc)}",
                       style: const TextStyle(color: Colors.black54),
                     ),
                     if (isAtrasados)
@@ -3614,7 +3631,7 @@ class AppHeader extends StatelessWidget {
               ),
               child: Image.asset(
                 "assets/images/logo.png",
-                height: 44, // âœ… logo grande
+                height: 44, // ✅ logo grande
                 fit: BoxFit.contain,
               ),
             ),
