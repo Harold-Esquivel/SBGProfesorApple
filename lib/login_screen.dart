@@ -36,77 +36,64 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => isLoading = true);
 
     try {
+      if (widget.role == "Alumno") {
+        final emailFalso = "$codigo@sbgalumno.com";
 
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: emailFalso,
+          password: password,
+        );
+      } else if (widget.role == "Profesor") {
+        try {
+          // 🔥 Primero intenta como profesor
+          final emailProfesor = "$codigo@sbgprofesor.com";
 
-if (widget.role == "Alumno") {
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+            email: emailProfesor,
+            password: password,
+          );
+        } on FirebaseAuthException {
+          // 🔥 Si falla, intenta como director automáticamente
+          final emailDirector = "$codigo@sbgdirector.com";
 
-  final emailFalso = "$codigo@sbgalumno.com";
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+            email: emailDirector,
+            password: password,
+          );
+        }
+      } else {
+        final emailFalso = "$codigo@sbg.com";
 
-  await FirebaseAuth.instance.signInWithEmailAndPassword(
-    email: emailFalso,
-    password: password,
-  );
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: emailFalso,
+          password: password,
+        );
+      }
 
-} else if (widget.role == "Profesor") {
+      if (!mounted) return;
 
-  try {
-    // 🔥 Primero intenta como profesor
-    final emailProfesor = "$codigo@sbgprofesor.com";
+      final user = FirebaseAuth.instance.currentUser;
 
-    await FirebaseAuth.instance.signInWithEmailAndPassword(
-      email: emailProfesor,
-      password: password,
-    );
+      if (!mounted || user == null) return;
 
-  } on FirebaseAuthException {
-    // 🔥 Si falla, intenta como director automáticamente
-    final emailDirector = "$codigo@sbgdirector.com";
-
-    await FirebaseAuth.instance.signInWithEmailAndPassword(
-      email: emailDirector,
-      password: password,
-    );
-  }
-
-} else {
-
-  final emailFalso = "$codigo@sbg.com";
-
-  await FirebaseAuth.instance.signInWithEmailAndPassword(
-    email: emailFalso,
-    password: password,
-  );
-}
-
-if (!mounted) return;
-
-final user = FirebaseAuth.instance.currentUser;
-
-if (!mounted || user == null) return;
-
-Navigator.pushAndRemoveUntil(
-  context,
-  MaterialPageRoute(builder: (_) => const AuthGate()),
-  (route) => false,
-);
-
-} 
-on FirebaseAuthException catch (e) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const AuthGate()),
+        (route) => false,
+      );
+    } on FirebaseAuthException catch (e) {
       print("Error de Firebase: ${e.code}");
-      
+
       String mensaje = "Código o contraseña incorrectos";
-      
+
       if (e.code == 'network-request-failed') {
         mensaje = "Revisa tu conexión a internet";
       }
       _showErrorDialog(mensaje);
-} 
-catch (e) {
-      
+    } catch (e) {
       print("Error desconocido: $e");
       _showErrorDialog("Ocurrió un error inesperado");
-    } 
-    finally {
+    } finally {
       if (mounted) {
         setState(() => isLoading = false);
       }
@@ -128,10 +115,7 @@ catch (e) {
           reverseCurve: Curves.easeOut,
         );
 
-        return ScaleTransition(
-          scale: curvedAnimation,
-          child: child,
-        );
+        return ScaleTransition(scale: curvedAnimation, child: child);
       },
       pageBuilder: (context, animation, secondaryAnimation) {
         return AlertDialog(
@@ -144,15 +128,15 @@ catch (e) {
             children: [
               const Text(
                 "Error",
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: const Icon(
-                  Icons.close,
-                  color: Colors.white,
-                ),
-              )
+                child: const Icon(Icons.close, color: Colors.white),
+              ),
             ],
           ),
           content: Text(
@@ -176,127 +160,149 @@ catch (e) {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.appPrimaryBackground,
-      body: Center(
-        child: SingleChildScrollView(
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20),
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: context.appCard,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: context.appBorder),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Asegúrate de que esta imagen exista en tus assets
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(24),
-                  child: Image.asset(
-                  'assets/images/logo.png',
-                    height: 120,
-                    width: 120,
-                    fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    // Si no encuentra la imagen, muestra un ícono para que no truene
-                      return const Icon(
-                        Icons.school,
-                        size: 80,
-                        color: Colors.blue,
-                      );
-                  },
-                  ),
+      body: Stack(
+        children: [
+          // ✅ CONTENIDO PRINCIPAL
+          Center(
+            child: SingleChildScrollView(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: context.appCard,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: context.appBorder),
                 ),
-                const SizedBox(height: 24),
-
-                TextField(
-                  controller: emailController,
-                  style: const TextStyle(color: Colors.white),
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    hintText: "Código",
-                    hintStyle: const TextStyle(color: Colors.white54),
-                    floatingLabelBehavior: FloatingLabelBehavior.never,
-                    prefixIcon: const Icon(Icons.badge, color: Colors.white),
-                    filled: true,
-                    fillColor: Colors.grey.shade900,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 18),
-
-                TextField(
-                  controller: passwordController,
-                  obscureText: true,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    hintText: "Contraseña",
-                    hintStyle: const TextStyle(color: Colors.white54),
-                    floatingLabelBehavior: FloatingLabelBehavior.never,
-                    prefixIcon: const Icon(Icons.lock, color: Colors.white),
-                    filled: true,
-                    fillColor: Colors.grey.shade900,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                GestureDetector(
-                  onTapDown: (_) {
-                    if (!isLoading) setState(() => _scale = 0.96);
-                  },
-                  onTapUp: (_) {
-                    if (!isLoading) setState(() => _scale = 1.0);
-                  },
-                  onTapCancel: () {
-                    if (!isLoading) setState(() => _scale = 1.0);
-                  },
-                  onTap: isLoading ? null : login,
-                  child: AnimatedScale(
-                    scale: _scale,
-                    duration: const Duration(milliseconds: 120),
-                    curve: Curves.easeOut,
-                    child: Container(
-                      width: double.infinity,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF4B4FE3),
-                        borderRadius: BorderRadius.circular(14),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Asegúrate de que esta imagen exista en tus assets
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        height: 120,
+                        width: 120,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          // Si no encuentra la imagen, muestra un ícono para que no truene
+                          return const Icon(
+                            Icons.school,
+                            size: 80,
+                            color: Colors.blue,
+                          );
+                        },
                       ),
-                      alignment: Alignment.center,
-                      child: isLoading
-                          ? const SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2.5,
-                              ),
-                            )
-                          : const Text(
-                              "Iniciar Sesión",
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
                     ),
-                  ),
+                    const SizedBox(height: 24),
+
+                    TextField(
+                      controller: emailController,
+                      style: const TextStyle(color: Colors.white),
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        hintText: "Código",
+                        hintStyle: const TextStyle(color: Colors.white54),
+                        floatingLabelBehavior: FloatingLabelBehavior.never,
+                        prefixIcon: const Icon(
+                          Icons.badge,
+                          color: Colors.white,
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade900,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    TextField(
+                      controller: passwordController,
+                      obscureText: true,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: "Contraseña",
+                        hintStyle: const TextStyle(color: Colors.white54),
+                        floatingLabelBehavior: FloatingLabelBehavior.never,
+                        prefixIcon: const Icon(Icons.lock, color: Colors.white),
+                        filled: true,
+                        fillColor: Colors.grey.shade900,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    GestureDetector(
+                      onTapDown: (_) {
+                        if (!isLoading) setState(() => _scale = 0.96);
+                      },
+                      onTapUp: (_) {
+                        if (!isLoading) setState(() => _scale = 1.0);
+                      },
+                      onTapCancel: () {
+                        if (!isLoading) setState(() => _scale = 1.0);
+                      },
+                      onTap: isLoading ? null : login,
+                      child: AnimatedScale(
+                        scale: _scale,
+                        duration: const Duration(milliseconds: 120),
+                        curve: Curves.easeOut,
+                        child: Container(
+                          width: double.infinity,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF4B4FE3),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          alignment: Alignment.center,
+                          child: isLoading
+                              ? const SizedBox(
+                                  height: 24,
+                                  width: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.5,
+                                  ),
+                                )
+                              : const Text(
+                                  "Iniciar Sesión",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                  ],
                 ),
-                const SizedBox(height: 15),
-              ],
+              ),
             ),
           ),
-        ),
+
+          // ✅ VERSIÓN EN ESQUINA INFERIOR IZQUIERDA
+          Positioned(
+            bottom: 20,
+            left: 20,
+            child: Text(
+              'v2.0.1',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.5),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
