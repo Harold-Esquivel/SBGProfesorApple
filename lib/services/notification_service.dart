@@ -33,7 +33,8 @@ class NotificationService {
     tz.setLocalLocation(tz.getLocation('America/Lima'));
 
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const settings = InitializationSettings(android: android);
+    const ios = DarwinInitializationSettings();
+    const settings = InitializationSettings(android: android, iOS: ios);
 
     await _plugin.initialize(settings);
 
@@ -43,6 +44,12 @@ class NotificationService {
         >();
     await androidPlugin?.requestNotificationsPermission();
     await androidPlugin?.requestExactAlarmsPermission();
+
+    final iosPlugin = _plugin
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >();
+    await iosPlugin?.requestPermissions(alert: true, badge: true, sound: true);
 
     _initialized = true;
   }
@@ -266,7 +273,15 @@ class NotificationService {
       priority: Priority.high,
     );
 
-    return const NotificationDetails(android: android);
+    const ios = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      presentBanner: true,
+      presentList: true,
+    );
+
+    return const NotificationDetails(android: android, iOS: ios);
   }
 
   DateTime? _combineDateAndTime(DateTime date, String hhmm) {
