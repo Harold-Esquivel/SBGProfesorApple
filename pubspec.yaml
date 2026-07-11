@@ -62,6 +62,7 @@ flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/images/logoapp.png"
+  remove_alpha_ios: true
 # The following section is specific to Flutter packages.
 flutter:
 
@@ -71,6 +72,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/logo.png
+    - assets/images/logoapp.png
     - assets/images/Yape.png
 
   # To add assets to your application, add an assets section, like this:

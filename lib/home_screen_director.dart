@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:sbg_profesores/theme/app_theme.dart';
 import 'package:sbg_profesores/widgets/liquid_glass_bottom_nav.dart';
+import 'package:sbg_profesores/widgets/liquid_glass_panel.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:sbg_profesores/theme/app_colors.dart';
@@ -177,11 +178,8 @@ class ListaInformesAlumnoDirectorView extends StatelessWidget {
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-            child: Container(
-              decoration: BoxDecoration(
-                color: context.appPanel,
-                borderRadius: BorderRadius.circular(18),
-              ),
+            child: LiquidGlassPanel(
+              borderRadius: BorderRadius.circular(18),
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection("informes")
@@ -216,7 +214,7 @@ class ListaInformesAlumnoDirectorView extends StatelessWidget {
                   return ListView.separated(
                     padding: const EdgeInsets.all(14),
                     itemCount: informes.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
                     itemBuilder: (context, i) {
                       final d = informes[i].data() as Map<String, dynamic>;
                       final titulo = (d["titulo"] ?? "Informe").toString();
@@ -242,7 +240,7 @@ class ListaInformesAlumnoDirectorView extends StatelessWidget {
                                 width: 44,
                                 height: 44,
                                 decoration: BoxDecoration(
-                                  color: kPrimary.withOpacity(0.12),
+                                  color: kPrimary.withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                                 child: const Icon(
@@ -359,11 +357,8 @@ class _CrearInformeAlumnoViewState extends State<CrearInformeAlumnoView> {
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-            child: Container(
-              decoration: BoxDecoration(
-                color: context.appPanel,
-                borderRadius: BorderRadius.circular(18),
-              ),
+            child: LiquidGlassPanel(
+              borderRadius: BorderRadius.circular(18),
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
@@ -486,11 +481,8 @@ class _SeleccionarAlumnoInformeViewState
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-            child: Container(
-              decoration: BoxDecoration(
-                color: context.appPanel,
-                borderRadius: BorderRadius.circular(18),
-              ),
+            child: LiquidGlassPanel(
+              borderRadius: BorderRadius.circular(18),
               child: Column(
                 children: [
                   Padding(
@@ -543,7 +535,7 @@ class _SeleccionarAlumnoInformeViewState
                         return ListView.separated(
                           padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
                           itemCount: alumnos.length,
-                          separatorBuilder: (_, __) =>
+                          separatorBuilder: (_, _) =>
                               const SizedBox(height: 10),
                           itemBuilder: (context, i) {
                             final alumno = alumnos[i];
@@ -633,11 +625,8 @@ class InformesDirectorSectionView extends StatelessWidget {
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: context.appPanel,
-              borderRadius: BorderRadius.circular(18),
-            ),
+          child: LiquidGlassPanel(
+            borderRadius: BorderRadius.circular(18),
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
@@ -734,7 +723,7 @@ class _DirectorActionCard extends StatelessWidget {
               width: 46,
               height: 46,
               decoration: BoxDecoration(
-                color: kPrimary.withOpacity(0.12),
+                color: kPrimary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(icono, color: kPrimary),
@@ -778,11 +767,8 @@ class EstadisticasDirectorView extends StatelessWidget {
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: context.appPanel,
-              borderRadius: BorderRadius.circular(18),
-            ),
+          child: LiquidGlassPanel(
+            borderRadius: BorderRadius.circular(18),
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection("clases")
@@ -857,7 +843,7 @@ class EstadisticasDirectorView extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.04),
+                        color: Colors.black.withValues(alpha: 0.04),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Column(
@@ -954,7 +940,7 @@ class _BigStatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cardColor = context.isDarkMode
-        ? Color.alphaBlend(border.withOpacity(0.18), context.appCard)
+        ? Color.alphaBlend(border.withValues(alpha: 0.18), context.appCard)
         : bg;
 
     return Container(
@@ -1058,11 +1044,8 @@ class HorarioGeneralProfesoresView extends StatelessWidget {
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-            child: Container(
-              decoration: BoxDecoration(
-                color: context.appPanel,
-                borderRadius: BorderRadius.circular(18),
-              ),
+            child: LiquidGlassPanel(
+              borderRadius: BorderRadius.circular(18),
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection("usuarios")
@@ -1114,7 +1097,7 @@ class HorarioGeneralProfesoresView extends StatelessWidget {
                       return ListView.separated(
                         padding: const EdgeInsets.all(16),
                         itemCount: clases.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {
                           final data =
                               clases[index].data() as Map<String, dynamic>;
@@ -1328,11 +1311,8 @@ class ListaProfesoresView extends StatelessWidget {
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-            child: Container(
-              decoration: BoxDecoration(
-                color: context.appPanel,
-                borderRadius: BorderRadius.circular(18),
-              ),
+            child: LiquidGlassPanel(
+              borderRadius: BorderRadius.circular(18),
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection("usuarios")
@@ -1340,22 +1320,24 @@ class ListaProfesoresView extends StatelessWidget {
                     .orderBy("nombre")
                     .snapshots(),
                 builder: (context, snap) {
-                  if (!snap.hasData)
+                  if (!snap.hasData) {
                     return const Center(child: CircularProgressIndicator());
+                  }
 
                   final profes = snap.data!.docs.where((doc) {
                     final data = doc.data() as Map<String, dynamic>;
                     return _usuarioActivo(data);
                   }).toList();
-                  if (profes.isEmpty)
+                  if (profes.isEmpty) {
                     return const Center(
                       child: Text("No hay profesores activos"),
                     );
+                  }
 
                   return ListView.separated(
                     padding: const EdgeInsets.all(14),
                     itemCount: profes.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
                     itemBuilder: (context, i) {
                       final p = profes[i];
                       final id = p.id;
@@ -1438,19 +1420,17 @@ class EstadisticasProfesorView extends StatelessWidget {
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-            child: Container(
-              decoration: BoxDecoration(
-                color: context.appPanel,
-                borderRadius: BorderRadius.circular(18),
-              ),
+            child: LiquidGlassPanel(
+              borderRadius: BorderRadius.circular(18),
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection("clases")
                     .where("profesorId", isEqualTo: profesorId)
                     .snapshots(),
                 builder: (context, snap) {
-                  if (!snap.hasData)
+                  if (!snap.hasData) {
                     return const Center(child: CircularProgressIndicator());
+                  }
 
                   final clases = snap.data!.docs;
 
@@ -1490,7 +1470,7 @@ class EstadisticasProfesorView extends StatelessWidget {
                               height: 42,
                               width: 42,
                               decoration: BoxDecoration(
-                                color: kPrimary.withOpacity(0.12),
+                                color: kPrimary.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(14),
                               ),
                               child: const Icon(Icons.school, color: kPrimary),
@@ -1603,7 +1583,7 @@ class _SmallStatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cardColor = context.isDarkMode
-        ? Color.alphaBlend(border.withOpacity(0.18), context.appCard)
+        ? Color.alphaBlend(border.withValues(alpha: 0.18), context.appCard)
         : bg;
 
     return Container(
@@ -1647,11 +1627,8 @@ class PagosDirectorSectionView extends StatelessWidget {
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: context.appPanel,
-              borderRadius: BorderRadius.circular(18),
-            ),
+          child: LiquidGlassPanel(
+            borderRadius: BorderRadius.circular(18),
             child: Column(
               children: [
                 const SizedBox(height: 16),
@@ -1723,11 +1700,8 @@ class PerfilDirectorView extends StatelessWidget {
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: context.appPanel,
-              borderRadius: BorderRadius.circular(18),
-            ),
+          child: LiquidGlassPanel(
+            borderRadius: BorderRadius.circular(18),
             child: Stack(
               children: [
                 StreamBuilder<DocumentSnapshot>(
@@ -1899,7 +1873,7 @@ class PerfilDirectorView extends StatelessWidget {
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
+                          color: Colors.black.withValues(alpha: 0.15),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -2075,11 +2049,13 @@ class _GestionUsuariosDirectorViewState
           title: Text("Cambiar grupo - $nombre"),
           content: TextField(
             controller: grupoCtrl,
+            style: TextStyle(color: context.appText),
             decoration: InputDecoration(
               hintText: "Ej: 306, 307, etc.",
-              prefixIcon: const Icon(Icons.class_),
+              hintStyle: TextStyle(color: context.appMutedText),
+              prefixIcon: Icon(Icons.class_, color: context.appMutedText),
               filled: true,
-              fillColor: Colors.grey.shade100,
+              fillColor: context.appInputFill,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -2165,11 +2141,8 @@ class _GestionUsuariosDirectorViewState
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-            child: Container(
-              decoration: BoxDecoration(
-                color: context.appPanel,
-                borderRadius: BorderRadius.circular(18),
-              ),
+            child: LiquidGlassPanel(
+              borderRadius: BorderRadius.circular(18),
               child: Column(
                 children: [
                   Padding(
@@ -2228,7 +2201,7 @@ class _GestionUsuariosDirectorViewState
                         return ListView.separated(
                           padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
                           itemCount: usuarios.length,
-                          separatorBuilder: (_, __) =>
+                          separatorBuilder: (_, _) =>
                               const SizedBox(height: 10),
                           itemBuilder: (context, index) {
                             final usuario = usuarios[index];
@@ -2618,11 +2591,8 @@ class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-            child: Container(
-              decoration: BoxDecoration(
-                color: context.appPanel,
-                borderRadius: BorderRadius.circular(18),
-              ),
+            child: LiquidGlassPanel(
+              borderRadius: BorderRadius.circular(18),
               child: Form(
                 key: _formKey,
                 child: ListView(
@@ -2693,8 +2663,9 @@ class _CrearUsuarioDirectorViewState extends State<CrearUsuarioDirectorView> {
                       validator: (value) {
                         final limpio = value?.trim() ?? "";
                         if (limpio.isEmpty) return "Ingresa el código";
-                        if (limpio.contains(" "))
+                        if (limpio.contains(" ")) {
                           return "El código no debe tener espacios";
+                        }
                         return null;
                       },
                     ),
@@ -2866,7 +2837,7 @@ class _BigActionCard extends StatelessWidget {
               height: 46,
               width: 46,
               decoration: BoxDecoration(
-                color: kPrimary.withOpacity(0.12),
+                color: kPrimary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(icon, color: kPrimary),
@@ -3035,11 +3006,8 @@ class _CrearPagoDirectorViewState extends State<CrearPagoDirectorView> {
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-            child: Container(
-              decoration: BoxDecoration(
-                color: context.appPanel,
-                borderRadius: BorderRadius.circular(18),
-              ),
+            child: LiquidGlassPanel(
+              borderRadius: BorderRadius.circular(18),
               child: ListView(
                 padding: const EdgeInsets.all(14),
                 children: [
@@ -3098,8 +3066,9 @@ class _CrearPagoDirectorViewState extends State<CrearPagoDirectorView> {
                             firstDate: DateTime(2023),
                             lastDate: DateTime(2035),
                           );
-                          if (picked != null)
+                          if (picked != null) {
                             setState(() => _vencimiento = picked);
+                          }
                         },
                         child: const Text("Cambiar"),
                       ),
@@ -3126,7 +3095,7 @@ class _CrearPagoDirectorViewState extends State<CrearPagoDirectorView> {
                     subtitle: const Text(
                       "Si lo apagas, podrás seleccionar alumnos específicos a los que se les asignará este pago.",
                     ),
-                    activeColor: kPrimary,
+                    activeThumbColor: kPrimary,
                   ),
 
                   if (!_paraTodos) ...[
@@ -3154,10 +3123,11 @@ class _CrearPagoDirectorViewState extends State<CrearPagoDirectorView> {
                             .where("rol", isEqualTo: "alumno")
                             .snapshots(),
                         builder: (context, snapshot) {
-                          if (!snapshot.hasData)
+                          if (!snapshot.hasData) {
                             return const Center(
                               child: CircularProgressIndicator(),
                             );
+                          }
 
                           final alumnos = snapshot.data!.docs.where((d) {
                             final data = d.data() as Map<String, dynamic>;
@@ -3171,7 +3141,7 @@ class _CrearPagoDirectorViewState extends State<CrearPagoDirectorView> {
 
                           return ListView.separated(
                             itemCount: alumnos.length,
-                            separatorBuilder: (_, __) =>
+                            separatorBuilder: (_, _) =>
                                 const Divider(height: 1),
                             itemBuilder: (context, i) {
                               final a = alumnos[i];
@@ -3252,11 +3222,8 @@ class ListaAlumnosPagosView extends StatelessWidget {
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-            child: Container(
-              decoration: BoxDecoration(
-                color: context.appPanel,
-                borderRadius: BorderRadius.circular(18),
-              ),
+            child: LiquidGlassPanel(
+              borderRadius: BorderRadius.circular(18),
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection("usuarios")
@@ -3264,8 +3231,9 @@ class ListaAlumnosPagosView extends StatelessWidget {
                     .orderBy("nombre")
                     .snapshots(),
                 builder: (context, snap) {
-                  if (!snap.hasData)
+                  if (!snap.hasData) {
                     return const Center(child: CircularProgressIndicator());
+                  }
 
                   final alumnos = snap.data!.docs.where((doc) {
                     final data = doc.data() as Map<String, dynamic>;
@@ -3278,7 +3246,7 @@ class ListaAlumnosPagosView extends StatelessWidget {
                   return ListView.separated(
                     padding: const EdgeInsets.all(14),
                     itemCount: alumnos.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
                     itemBuilder: (context, i) {
                       final a = alumnos[i];
                       final id = a.id;
@@ -3401,11 +3369,8 @@ class PagosAlumnoDirectorView extends StatelessWidget {
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-            child: Container(
-              decoration: BoxDecoration(
-                color: context.appPanel,
-                borderRadius: BorderRadius.circular(18),
-              ),
+            child: LiquidGlassPanel(
+              borderRadius: BorderRadius.circular(18),
               child: DefaultTabController(
                 length: 2,
                 child: Column(
@@ -3415,7 +3380,7 @@ class PagosAlumnoDirectorView extends StatelessWidget {
                       margin: const EdgeInsets.symmetric(horizontal: 12),
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.06),
+                        color: Colors.black.withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: TabBar(
@@ -3451,10 +3416,11 @@ class PagosAlumnoDirectorView extends StatelessWidget {
                             .orderBy("fechaVencimiento", descending: false)
                             .snapshots(),
                         builder: (context, snap) {
-                          if (!snap.hasData)
+                          if (!snap.hasData) {
                             return const Center(
                               child: CircularProgressIndicator(),
                             );
+                          }
 
                           final docs = snap.data!.docs;
 
@@ -3510,7 +3476,7 @@ class PagosAlumnoDirectorView extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.all(14),
       itemCount: docs.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, i) {
         final doc = docs[i];
         final d = doc.data() as Map<String, dynamic>;
@@ -3623,7 +3589,7 @@ class AppHeader extends StatelessWidget {
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.18),
+                    color: Colors.black.withValues(alpha: 0.18),
                     blurRadius: 14,
                     offset: const Offset(0, 6),
                   ),

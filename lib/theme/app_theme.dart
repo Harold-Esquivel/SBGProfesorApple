@@ -147,21 +147,21 @@ extension AppThemeContext on BuildContext {
       isDarkMode ? const Color(0xFFB9BED4) : Colors.black54;
 
   Color get appSoftFill =>
-      isDarkMode ? const Color(0xFF2B3047) : Colors.black.withOpacity(0.05);
+      isDarkMode ? const Color(0xFF2B3047) : Colors.black.withValues(alpha: 0.05);
 
   Color get appInputFill => isDarkMode ? const Color(0xFF111525) : Colors.white;
 
   Color get appTabTrack =>
-      isDarkMode ? const Color(0xFF171A2A) : Colors.black.withOpacity(0.06);
+      isDarkMode ? const Color(0xFF171A2A) : Colors.black.withValues(alpha: 0.06);
 
   Color get appTabIndicator =>
       isDarkMode ? const Color(0xFF2B3047) : Colors.white;
 
   Color get appBorder =>
-      isDarkMode ? const Color(0xFF383E58) : Colors.black.withOpacity(0.06);
+      isDarkMode ? const Color(0xFF383E58) : Colors.black.withValues(alpha: 0.06);
 
   Color get appShadow =>
-      isDarkMode ? Colors.black.withOpacity(0.22) : Colors.black.withOpacity(0.06);
+      isDarkMode ? Colors.black.withValues(alpha: 0.22) : Colors.black.withValues(alpha: 0.06);
 }
 
 class ThemeToggleButton extends StatelessWidget {
@@ -175,7 +175,7 @@ class ThemeToggleButton extends StatelessWidget {
     return Material(
       color: context.appCard,
       elevation: 8,
-      shadowColor: Colors.black.withOpacity(context.isDarkMode ? 0.35 : 0.18),
+      shadowColor: Colors.black.withValues(alpha: context.isDarkMode ? 0.35 : 0.18),
       shape: const CircleBorder(),
       child: InkWell(
         customBorder: const CircleBorder(),

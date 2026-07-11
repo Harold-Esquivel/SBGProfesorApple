@@ -6,6 +6,7 @@ import 'package:sbg_profesores/theme/app_colors.dart'; // tu kPrimary
 import 'package:sbg_profesores/views/perfil_view.dart'; // si tienes un PerfilAlumno ya, Ãºsalo
 import 'package:sbg_profesores/widgets/classcard.dart'; // tu ClaseCard
 import 'package:sbg_profesores/widgets/liquid_glass_bottom_nav.dart';
+import 'package:sbg_profesores/widgets/liquid_glass_panel.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:sbg_profesores/services/auth_navigation_service.dart';
@@ -13,6 +14,21 @@ import 'package:sbg_profesores/services/auth_navigation_service.dart';
 bool _usuarioActivo(Map<String, dynamic> data) {
   final estado = (data["estado"] ?? "activo").toString().trim().toLowerCase();
   return estado != "inactivo";
+}
+
+Future<String> _nombreProfesorDeClase(Map<String, dynamic> data) async {
+  final nombreGuardado = (data["profesorNombre"] ?? "").toString().trim();
+  if (nombreGuardado.isNotEmpty) return nombreGuardado;
+
+  final profesorId = (data["profesorId"] ?? "").toString().trim();
+  if (profesorId.isEmpty) return "Profesor";
+
+  final doc = await FirebaseFirestore.instance
+      .collection("usuarios")
+      .doc(profesorId)
+      .get();
+  final nombre = (doc.data()?["nombre"] ?? "").toString().trim();
+  return nombre.isEmpty ? "Profesor" : nombre;
 }
 
 class HomeAlumno extends StatefulWidget {
@@ -88,7 +104,7 @@ Future<void> _mostrarModalSolicitarClase(BuildContext context) async {
   String profesorNombreSeleccionado = "";
 
   // Helper: validar horaFin > horaInicio
-  int _durToMin(String d) {
+  int durToMin(String d) {
     switch (d) {
       case "45":
         return 45;
@@ -103,7 +119,7 @@ Future<void> _mostrarModalSolicitarClase(BuildContext context) async {
     }
   }
 
-  TimeOfDay _addMinutes(TimeOfDay t, int minutes) {
+  TimeOfDay addMinutes(TimeOfDay t, int minutes) {
     final total = t.hour * 60 + t.minute + minutes;
     final h = (total ~/ 60) % 24;
     final m = total % 60;
@@ -122,10 +138,10 @@ Future<void> _mostrarModalSolicitarClase(BuildContext context) async {
                 ? "Hora inicio"
                 : fmt24(horaInicio!);
 
-            final minutos = _durToMin(duracion);
+            final minutos = durToMin(duracion);
             final horaFinCalc = (horaInicio == null)
                 ? null
-                : _addMinutes(horaInicio!, minutos);
+                : addMinutes(horaInicio!, minutos);
 
             return Padding(
               padding: const EdgeInsets.all(18),
@@ -260,7 +276,7 @@ Future<void> _mostrarModalSolicitarClase(BuildContext context) async {
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                "Duración: ${duracion} min",
+                                "Duración: $duracion min",
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 16,
@@ -644,7 +660,7 @@ class _HorarioAlumnoViewState extends State<HorarioAlumnoView> {
       context: context,
       barrierDismissible: true,
       barrierLabel: "detalle_clase",
-      barrierColor: Colors.black.withOpacity(0.45),
+      barrierColor: Colors.black.withValues(alpha: 0.45),
       transitionDuration: const Duration(milliseconds: 220),
       pageBuilder: (_, _, _) {
         return Center(
@@ -687,7 +703,7 @@ class _HorarioAlumnoViewState extends State<HorarioAlumnoView> {
           ),
         );
       },
-      transitionBuilder: (_, anim, __, child) {
+      transitionBuilder: (_, anim, _, child) {
         final curved = CurvedAnimation(parent: anim, curve: Curves.easeOutBack);
         return FadeTransition(
           opacity: anim,
@@ -876,22 +892,27 @@ class _HorarioAlumnoViewState extends State<HorarioAlumnoView> {
 
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 12),
-                            child: GestureDetector(
-                              onTap: () => _mostrarDetalleClaseSoloLectura(
-                                context,
-                                clase,
-                              ),
-                              child: ClaseCard(
-                                hora:
-                                    (horaInicio.isNotEmpty &&
-                                        horaFin.isNotEmpty)
-                                    ? "$horaInicio - $horaFin"
-                                    : "Hora no definida",
-                                materia: materia,
-                                profesor: "Profesor",
-                                estado: estado,
-                                tipoClase: tipoClase,
-                              ),
+                            child: FutureBuilder<String>(
+                              future: _nombreProfesorDeClase(data),
+                              builder: (context, profesorSnap) {
+                                return GestureDetector(
+                                  onTap: () => _mostrarDetalleClaseSoloLectura(
+                                    context,
+                                    clase,
+                                  ),
+                                  child: ClaseCard(
+                                    hora:
+                                        (horaInicio.isNotEmpty &&
+                                            horaFin.isNotEmpty)
+                                        ? "$horaInicio - $horaFin"
+                                        : "Hora no definida",
+                                    materia: materia,
+                                    profesor: profesorSnap.data ?? "Profesor",
+                                    estado: estado,
+                                    tipoClase: tipoClase,
+                                  ),
+                                );
+                              },
                             ),
                           );
                         }),
@@ -917,11 +938,8 @@ class _HorarioAlumnoViewState extends State<HorarioAlumnoView> {
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 0, 14, 6),
-          child: Container(
-            decoration: BoxDecoration(
-              color: context.appPanel,
-              borderRadius: BorderRadius.circular(18),
-            ),
+          child: LiquidGlassPanel(
+            borderRadius: BorderRadius.circular(18),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(18),
               child: _contenidoHorario(context),
@@ -967,11 +985,8 @@ class PagosAlumnoView extends StatelessWidget {
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 0, 14, 6),
-          child: Container(
-            decoration: BoxDecoration(
-              color: context.appPanel,
-              borderRadius: BorderRadius.circular(18),
-            ),
+          child: LiquidGlassPanel(
+            borderRadius: BorderRadius.circular(18),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(18),
               child: DefaultTabController(
@@ -985,7 +1000,7 @@ class PagosAlumnoView extends StatelessWidget {
                       margin: const EdgeInsets.symmetric(horizontal: 12),
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.06),
+                        color: Colors.black.withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: TabBar(
@@ -1168,7 +1183,7 @@ class _ListaPagos extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.all(14),
       itemCount: items.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, i) {
         final doc = items[i];
         final p = doc.data() as Map<String, dynamic>;
@@ -1262,7 +1277,7 @@ class _ListaPagos extends StatelessWidget {
                       if (mora > 0) ...[
                         const SizedBox(height: 2),
                         Text(
-                          "Incluye mora: $moneda ${_montoTxt(mora)} (${diasMora} dÃ­a(s) Ã— S/5)",
+                          "Incluye mora: $moneda ${_montoTxt(mora)} ($diasMora dÃ­a(s) Ã— S/5)",
                           style: const TextStyle(color: Colors.black54),
                         ),
                       ],
@@ -1546,11 +1561,8 @@ class PerfilAlumnoView extends StatelessWidget {
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: context.appPanel,
-              borderRadius: BorderRadius.circular(18),
-            ),
+          child: LiquidGlassPanel(
+            borderRadius: BorderRadius.circular(18),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(18),
               child: StreamBuilder<DocumentSnapshot>(
@@ -1715,7 +1727,7 @@ class PerfilAlumnoView extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(14),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.15),
+                                    color: Colors.black.withValues(alpha: 0.15),
                                     blurRadius: 10,
                                     offset: const Offset(0, 4),
                                   ),
@@ -1750,11 +1762,8 @@ class InformesAlumnoView extends StatelessWidget {
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: context.appPanel,
-              borderRadius: BorderRadius.circular(18),
-            ),
+          child: LiquidGlassPanel(
+            borderRadius: BorderRadius.circular(18),
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection("informes")
@@ -1828,11 +1837,11 @@ class InformesAlumnoView extends StatelessWidget {
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(18),
                               border: Border.all(
-                                color: Colors.black.withOpacity(0.06),
+                                color: Colors.black.withValues(alpha: 0.06),
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
+                                  color: Colors.black.withValues(alpha: 0.05),
                                   blurRadius: 12,
                                   offset: const Offset(0, 6),
                                 ),
@@ -1844,7 +1853,7 @@ class InformesAlumnoView extends StatelessWidget {
                                   height: 46,
                                   width: 46,
                                   decoration: BoxDecoration(
-                                    color: kPrimary.withOpacity(0.12),
+                                    color: kPrimary.withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(14),
                                   ),
                                   child: const Icon(
@@ -1997,7 +2006,7 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cardColor = context.isDarkMode
-        ? Color.alphaBlend(borderColor.withOpacity(0.18), context.appCard)
+        ? Color.alphaBlend(borderColor.withValues(alpha: 0.18), context.appCard)
         : bgColor;
 
     return Container(
@@ -2098,7 +2107,7 @@ class AppHeader extends StatelessWidget {
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.18),
+                    color: Colors.black.withValues(alpha: 0.18),
                     blurRadius: 14,
                     offset: const Offset(0, 6),
                   ),

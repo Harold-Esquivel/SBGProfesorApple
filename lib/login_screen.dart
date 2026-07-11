@@ -296,7 +296,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Text(
               'v2.0.1',
               style: TextStyle(
-                color: Colors.white.withOpacity(0.5),
+                color: Colors.white.withValues(alpha: 0.5),
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),

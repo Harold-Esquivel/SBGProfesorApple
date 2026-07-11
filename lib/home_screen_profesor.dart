@@ -1,4 +1,4 @@
-﻿import 'package:flutter/cupertino.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,6 +9,7 @@ import 'package:sbg_profesores/widgets/animated_role_button.dart';
 import 'package:sbg_profesores/views/perfil_view.dart';
 import 'package:sbg_profesores/services/auth_navigation_service.dart';
 import 'package:sbg_profesores/widgets/liquid_glass_bottom_nav.dart';
+import 'package:sbg_profesores/widgets/liquid_glass_panel.dart';
 
 bool _usuarioActivo(Map<String, dynamic> data) {
   final estado = (data["estado"] ?? "activo").toString().trim().toLowerCase();
@@ -35,6 +36,33 @@ TimeOfDay _addMinutes(TimeOfDay t, int minutes) {
   final h = (total ~/ 60) % 24;
   final m = total % 60;
   return TimeOfDay(hour: h, minute: m);
+}
+
+TimeOfDay? _parseHora24(String? hhmm) {
+  if (hhmm == null || !hhmm.contains(":")) return null;
+  final parts = hhmm.split(":");
+  if (parts.length != 2) return null;
+  final h = int.tryParse(parts[0]);
+  final m = int.tryParse(parts[1]);
+  if (h == null || m == null || h < 0 || h > 23 || m < 0 || m > 59) {
+    return null;
+  }
+  return TimeOfDay(hour: h, minute: m);
+}
+
+Future<String> _nombreProfesorDeClase(Map<String, dynamic> data) async {
+  final nombreGuardado = (data["profesorNombre"] ?? "").toString().trim();
+  if (nombreGuardado.isNotEmpty) return nombreGuardado;
+
+  final profesorId = (data["profesorId"] ?? "").toString().trim();
+  if (profesorId.isEmpty) return "Profesor";
+
+  final doc = await FirebaseFirestore.instance
+      .collection("usuarios")
+      .doc(profesorId)
+      .get();
+  final nombre = (doc.data()?["nombre"] ?? "").toString().trim();
+  return nombre.isEmpty ? "Profesor" : nombre;
 }
 
 Future<String?> _pickDuracion(
@@ -283,8 +311,9 @@ class NotificacionesProfesorView extends StatelessWidget {
                                 firstDate: DateTime(2023),
                                 lastDate: DateTime(2035),
                               );
-                              if (picked != null)
+                              if (picked != null) {
                                 setModalState(() => fecha = picked);
+                              }
                             },
                             child: const Text("Cambiar"),
                           ),
@@ -300,8 +329,9 @@ class NotificacionesProfesorView extends StatelessWidget {
                             context,
                             inicial: horaIni,
                           );
-                          if (picked != null)
+                          if (picked != null) {
                             setModalState(() => horaIni = picked);
+                          }
                         },
                         child: Container(
                           padding: const EdgeInsets.symmetric(
@@ -343,8 +373,9 @@ class NotificacionesProfesorView extends StatelessWidget {
                             context,
                             actual: duracion,
                           );
-                          if (picked != null)
+                          if (picked != null) {
                             setModalState(() => duracion = picked);
+                          }
                         },
                         child: Container(
                           padding: const EdgeInsets.symmetric(
@@ -517,11 +548,8 @@ class NotificacionesProfesorView extends StatelessWidget {
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 0, 14, 6),
-          child: Container(
-            decoration: BoxDecoration(
-              color: context.appPanel,
-              borderRadius: BorderRadius.circular(18),
-            ),
+          child: LiquidGlassPanel(
+            borderRadius: BorderRadius.circular(18),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(18),
               child: StreamBuilder<QuerySnapshot>(
@@ -685,11 +713,8 @@ class PerfilProfesorView extends StatelessWidget {
         top: false, // porque tu AppHeader ya usa SafeArea arriba
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: context.appPanel,
-              borderRadius: BorderRadius.circular(18),
-            ),
+          child: LiquidGlassPanel(
+            borderRadius: BorderRadius.circular(18),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(18),
               child: _ContenidoPerfilProfesor(profesorId: profesorId),
@@ -753,19 +778,20 @@ class _ContenidoPerfilProfesor extends StatelessWidget {
                   final estado = (d["estado"] ?? "activa").toString();
                   final tipo = (d["tipoClase"] ?? "presencial").toString();
 
-                  if (estado == "hecha")
+                  if (estado == "hecha") {
                     hechas++;
-                  else if (estado == "cancelada")
+                  } else if (estado == "cancelada")
                     canceladas++;
                   else if (estado == "reprogramada")
                     reprogramadas++;
                   else
                     activas++;
 
-                  if (tipo == "virtual")
+                  if (tipo == "virtual") {
                     virtuales++;
-                  else
+                  } else {
                     presenciales++;
+                  }
                 }
 
                 return ListView(
@@ -863,7 +889,7 @@ class _ContenidoPerfilProfesor extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: const Text(
@@ -888,7 +914,7 @@ class _ContenidoPerfilProfesor extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
+                  color: Colors.black.withValues(alpha: 0.15),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -922,7 +948,7 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cardColor = context.isDarkMode
-        ? Color.alphaBlend(borderColor.withOpacity(0.18), context.appCard)
+        ? Color.alphaBlend(borderColor.withValues(alpha: 0.18), context.appCard)
         : bgColor;
 
     return Container(
@@ -1109,24 +1135,32 @@ class HorarioView extends StatelessWidget {
                               data["materia"]?.toString() ?? "Sin materia";
                           final estado = data["estado"]?.toString() ?? "activa";
                           final tipoClase =
-                              data["tipoClase"]?.toString() ?? "presencial";
+                              (data["tipoClase"] ??
+                                      data["tipo"] ??
+                                      "presencial")
+                                  .toString();
 
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 12),
-                            child: GestureDetector(
-                              onTap: () =>
-                                  _mostrarOpcionesClase(context, clase),
-                              child: ClaseCard(
-                                hora:
-                                    (horaInicio.isNotEmpty &&
-                                        horaFin.isNotEmpty)
-                                    ? "$horaInicio - $horaFin"
-                                    : "Hora no definida",
-                                materia: materia,
-                                profesor: "TÃº",
-                                estado: estado,
-                                tipoClase: tipoClase,
-                              ),
+                            child: FutureBuilder<String>(
+                              future: _nombreProfesorDeClase(data),
+                              builder: (context, profesorSnap) {
+                                return GestureDetector(
+                                  onTap: () =>
+                                      _mostrarOpcionesClase(context, clase),
+                                  child: ClaseCard(
+                                    hora:
+                                        (horaInicio.isNotEmpty &&
+                                            horaFin.isNotEmpty)
+                                        ? "$horaInicio - $horaFin"
+                                        : "Hora no definida",
+                                    materia: materia,
+                                    profesor: profesorSnap.data ?? "Profesor",
+                                    estado: estado,
+                                    tipoClase: tipoClase,
+                                  ),
+                                );
+                              },
                             ),
                           );
                         }),
@@ -1168,11 +1202,8 @@ class HorarioView extends StatelessWidget {
             14,
             6,
           ), // âœ… mÃ¡s largo (menos padding)
-          child: Container(
-            decoration: BoxDecoration(
-              color: context.appPanel,
-              borderRadius: BorderRadius.circular(18),
-            ),
+          child: LiquidGlassPanel(
+            borderRadius: BorderRadius.circular(18),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(18),
               child: _contenidoHorario(context),
@@ -1202,9 +1233,10 @@ class HorarioView extends StatelessWidget {
     final horaFin = (data["horaFin"] ?? "--:--").toString();
     final estado = (data["estado"] ?? "activa").toString();
 
-    final tipo = (data["tipoClase"] ?? "presencial")
+    final tipo = (data["tipoClase"] ?? data["tipo"] ?? "presencial")
         .toString(); // presencial | virtual
     final bool bloqueada = (estado == "hecha" || estado == "cancelada");
+    final bool editable = estado == "activa";
 
     DateTime? fecha;
     final f = data["fecha"];
@@ -1218,7 +1250,7 @@ class HorarioView extends StatelessWidget {
       context: context,
       barrierDismissible: true,
       barrierLabel: "detalle_clase",
-      barrierColor: Colors.black.withOpacity(0.45),
+      barrierColor: Colors.black.withValues(alpha: 0.45),
       transitionDuration: const Duration(milliseconds: 220),
       pageBuilder: (_, _, _) {
         return Center(
@@ -1228,29 +1260,45 @@ class HorarioView extends StatelessWidget {
               width: MediaQuery.of(context).size.width * 0.85,
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.appCard,
                 borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: context.appBorder),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
+                  Text(
                     "Detalle de clase",
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: context.appText,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 14),
 
-                  _infoFila("Materia", materia),
-                  _infoFila("Horario", "$horaInicio - $horaFin"),
-                  _infoFila("Fecha", fechaTxt),
-                  _infoFila("Estado", estado),
-                  _infoFila("Tipo", tipo),
+                  _infoFila(context, "Materia", materia),
+                  _infoFila(context, "Horario", "$horaInicio - $horaFin"),
+                  _infoFila(context, "Fecha", fechaTxt),
+                  _infoFila(context, "Estado", estado),
+                  _infoFila(context, "Tipo", tipo),
 
                   const SizedBox(height: 18),
 
                   if (!bloqueada) ...[
+                    if (editable) ...[
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _mostrarModalEditarClase(context, clase);
+                        },
+                        icon: const Icon(Icons.edit_outlined),
+                        label: const Text("Editar clase"),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
                     botonPrimario(
                       texto: "Tomar asistencia",
                       icono: Icons.checklist,
@@ -1273,15 +1321,18 @@ class HorarioView extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.05),
+                        color: context.appSoftFill,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         estado == "hecha"
-                            ? "... Está clase ya est marcada como hecha."
-                            : "... Está clase fue cancelada.",
+                            ? "Esta clase ya está marcada como hecha."
+                            : "Esta clase fue cancelada.",
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          color: context.appText,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                     // âœ… SOLO si fue cancelada: botÃ³n Reprogramar
@@ -1328,6 +1379,547 @@ class HorarioView extends StatelessWidget {
       },
     );
   }
+
+  Future<void> _confirmarEliminarClase(
+    BuildContext context,
+    QueryDocumentSnapshot clase,
+  ) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text("Eliminar clase"),
+          content: const Text(
+            "¿Seguro que quieres eliminar esta clase? Esta acción no se puede deshacer.",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text("No"),
+            ),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              icon: const Icon(Icons.delete_outline),
+              label: const Text("Sí, eliminar"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmar != true) return;
+
+    await clase.reference.delete();
+
+    if (!context.mounted) return;
+    Navigator.pop(context);
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text("Clase eliminada")));
+  }
+
+  void _mostrarModalEditarClase(
+    BuildContext context,
+    QueryDocumentSnapshot clase,
+  ) {
+    final data = clase.data() as Map<String, dynamic>;
+    final estado = (data["estado"] ?? "activa").toString();
+    if (estado != "activa") return;
+
+    final materiaController = TextEditingController(
+      text: (data["materia"] ?? "").toString(),
+    );
+    TimeOfDay? horaInicio =
+        _parseHora24(data["horaInicio"]?.toString()) ??
+        const TimeOfDay(hour: 8, minute: 0);
+    final duracionDb = data["duracionMin"];
+    String duracion = duracionDb is int ? duracionDb.toString() : "60";
+    if (!["45", "60", "90", "120"].contains(duracion)) duracion = "60";
+
+    DateTime fechaSeleccionada = DateTime.now();
+    final fechaDb = data["fecha"];
+    if (fechaDb is Timestamp) fechaSeleccionada = fechaDb.toDate();
+
+    String tipoClase = (data["tipoClase"] ?? data["tipo"] ?? "presencial")
+        .toString()
+        .toLowerCase();
+    if (tipoClase != "virtual") tipoClase = "presencial";
+
+    final alumnosSeleccionados = <String>[
+      ...List<String>.from(data["alumnosId"] ?? []),
+    ];
+    String filtroAlumno = "";
+    String filtroGrupo = "todos";
+
+    Widget chipTipo(
+      String value,
+      String label,
+      void Function(void Function()) setModalState,
+    ) {
+      final selected = tipoClase == value;
+      return ChoiceChip(
+        label: Text(label),
+        selected: selected,
+        selectedColor: kPrimary,
+        backgroundColor: context.isDarkMode
+            ? const Color(0xFF2B3047)
+            : Colors.grey.shade200,
+        labelStyle: TextStyle(
+          color: selected ? Colors.white : context.appText,
+          fontWeight: FontWeight.w600,
+        ),
+        onSelected: (_) => setModalState(() => tipoClase = value),
+      );
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
+          child: StatefulBuilder(
+            builder: (context, setModalState) {
+              final minutos = _durToMin(duracion);
+              final horaFinCalc = _addMinutes(horaInicio!, minutos);
+              final textoHoraInicio = fmt24(horaInicio!);
+
+              return Padding(
+                padding: const EdgeInsets.all(20),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        "Editar clase",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: context.appText,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      TextField(
+                        controller: materiaController,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: "Materia",
+                          hintStyle: const TextStyle(color: Colors.white54),
+                          floatingLabelBehavior: FloatingLabelBehavior.never,
+                          prefixIcon: const Icon(
+                            Icons.book,
+                            color: Colors.white,
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey.shade900,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      InkWell(
+                        onTap: () async {
+                          final picked = await mostrarPickerHoraIOS(
+                            context,
+                            inicial: horaInicio,
+                          );
+                          if (picked != null) {
+                            setModalState(() => horaInicio = picked);
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade900,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.access_time,
+                                color: Colors.white70,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  textoHoraInicio,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                              const Icon(
+                                Icons.keyboard_arrow_down,
+                                color: Colors.white70,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      InkWell(
+                        onTap: () async {
+                          final picked = await _pickDuracion(
+                            context,
+                            actual: duracion,
+                          );
+                          if (picked != null) {
+                            setModalState(() => duracion = picked);
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade900,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.timer, color: Colors.white70),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  "Duración: $duracion min",
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                              const Icon(
+                                Icons.keyboard_arrow_down,
+                                color: Colors.white70,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              "Fecha: ${fechaSeleccionada.day}/${fechaSeleccionada.month}/${fechaSeleccionada.year}",
+                              style: TextStyle(color: context.appText),
+                            ),
+                          ),
+                          TextButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: kPrimary,
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: fechaSeleccionada,
+                                firstDate: DateTime(2023),
+                                lastDate: DateTime(2030),
+                              );
+                              if (picked != null) {
+                                setModalState(() => fechaSeleccionada = picked);
+                              }
+                            },
+                            child: const Text("Cambiar"),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          chipTipo("presencial", "Presencial", setModalState),
+                          chipTipo("virtual", "Virtual", setModalState),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        "Filtrar por grupo",
+                        style: TextStyle(
+                          color: context.appText,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection("usuarios")
+                            .where("rol", isEqualTo: "alumno")
+                            .snapshots(),
+                        builder: (context, snapshot) {
+                          final gruposUnicos = <String>{"todos"};
+
+                          if (snapshot.hasData) {
+                            for (final doc in snapshot.data!.docs) {
+                              final data = doc.data() as Map<String, dynamic>;
+                              if (!_usuarioActivo(data)) continue;
+                              final grupo = (data["grupo"] ?? "").toString();
+                              if (grupo.isNotEmpty) gruposUnicos.add(grupo);
+                            }
+                          }
+
+                          final gruposOrdenados = gruposUnicos.toList()..sort();
+
+                          return Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: gruposOrdenados.map((grupo) {
+                              final selected = filtroGrupo == grupo;
+                              return ChoiceChip(
+                                label: Text(
+                                  grupo == "todos" ? "Todos" : "Grupo $grupo",
+                                ),
+                                selected: selected,
+                                selectedColor: kPrimary,
+                                backgroundColor: context.isDarkMode
+                                    ? const Color(0xFF2B3047)
+                                    : Colors.grey.shade200,
+                                labelStyle: TextStyle(
+                                  color: selected
+                                      ? Colors.white
+                                      : context.appText,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                onSelected: (_) {
+                                  setModalState(() {
+                                    filtroGrupo = grupo;
+                                    alumnosSeleccionados.clear();
+                                  });
+                                },
+                              );
+                            }).toList(),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Alumnos (${alumnosSeleccionados.length})",
+                            style: TextStyle(
+                              color: context.appText,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          TextButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: kPrimary,
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: () => setModalState(
+                              () => alumnosSeleccionados.clear(),
+                            ),
+                            child: const Text("Limpiar"),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        onChanged: (v) => setModalState(
+                          () => filtroAlumno = v.trim().toLowerCase(),
+                        ),
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: "Buscar alumno...",
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            color: Colors.white70,
+                          ),
+                          hintStyle: const TextStyle(color: Colors.white54),
+                          filled: true,
+                          fillColor: Colors.grey.shade900,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        height: 150,
+                        child: StreamBuilder<QuerySnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection("usuarios")
+                              .where("rol", isEqualTo: "alumno")
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+
+                            final alumnos = snapshot.data!.docs.where((doc) {
+                              final data = doc.data() as Map<String, dynamic>;
+                              if (!_usuarioActivo(data)) return false;
+                              if (filtroGrupo != "todos") {
+                                final grupo = (data["grupo"] ?? "").toString();
+                                if (grupo != filtroGrupo) return false;
+                              }
+
+                              final nombre = (data["nombre"] ?? "")
+                                  .toString()
+                                  .toLowerCase();
+                              return filtroAlumno.isEmpty ||
+                                  nombre.contains(filtroAlumno);
+                            }).toList();
+
+                            if (alumnos.isEmpty) {
+                              return Center(
+                                child: Text(
+                                  filtroGrupo == "todos"
+                                      ? "No se encontró ese alumno"
+                                      : "No hay alumnos en el grupo $filtroGrupo",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: context.appMutedText),
+                                ),
+                              );
+                            }
+
+                            return ListView.separated(
+                              itemCount: alumnos.length,
+                              separatorBuilder: (_, _) =>
+                                  Divider(color: context.appBorder, height: 1),
+                              itemBuilder: (context, i) {
+                                final alumno = alumnos[i];
+                                final id = alumno.id;
+                                final nombre =
+                                    (alumno["nombre"] ?? "Sin nombre")
+                                        .toString();
+                                final alumnoData =
+                                    alumno.data() as Map<String, dynamic>;
+                                final grupo = (alumnoData["grupo"] ?? "")
+                                    .toString();
+                                final seleccionado = alumnosSeleccionados
+                                    .contains(id);
+
+                                return ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  title: Text(
+                                    nombre,
+                                    style: TextStyle(color: context.appText),
+                                  ),
+                                  subtitle: grupo.isNotEmpty
+                                      ? Text(
+                                          "Grupo: $grupo",
+                                          style: TextStyle(
+                                            color: context.appMutedText,
+                                            fontSize: 12,
+                                          ),
+                                        )
+                                      : null,
+                                  trailing: IconButton(
+                                    onPressed: () {
+                                      setModalState(() {
+                                        if (seleccionado) {
+                                          alumnosSeleccionados.remove(id);
+                                        } else {
+                                          alumnosSeleccionados.add(id);
+                                        }
+                                      });
+                                    },
+                                    icon: Icon(
+                                      seleccionado
+                                          ? Icons.check_circle
+                                          : Icons.add_circle_outline,
+                                      color: seleccionado
+                                          ? kPrimary
+                                          : context.appMutedText,
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      botonPrimario(
+                        texto: "Guardar cambios",
+                        icono: Icons.save_outlined,
+                        onTap: () async {
+                          final materia = materiaController.text.trim();
+                          if (materia.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Completa la materia"),
+                              ),
+                            );
+                            return;
+                          }
+                          if (alumnosSeleccionados.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Selecciona al menos 1 alumno"),
+                              ),
+                            );
+                            return;
+                          }
+
+                          await clase.reference.update({
+                            "materia": materia,
+                            "horaInicio": fmt24(horaInicio!),
+                            "horaFin": fmt24(horaFinCalc),
+                            "duracionMin": minutos,
+                            "fecha": Timestamp.fromDate(fechaSeleccionada),
+                            "alumnosId": alumnosSeleccionados,
+                            "tipoClase": tipoClase,
+                            "updatedAt": Timestamp.now(),
+                          });
+
+                          if (!context.mounted) return;
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Clase actualizada")),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(color: Colors.red),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        onPressed: () =>
+                            _confirmarEliminarClase(dialogContext, clase),
+                        icon: const Icon(Icons.delete_outline),
+                        label: const Text("Eliminar clase"),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    ).whenComplete(materiaController.dispose);
+  }
 }
 
 /// Tomar asistencia
@@ -1335,10 +1927,19 @@ void _tomarAsistencia(BuildContext context, QueryDocumentSnapshot clase) async {
   final alumnosIds = List<String>.from(clase["alumnosId"]);
   final asistieron = <String>[];
 
+  if (alumnosIds.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Esta clase no tiene alumnos asignados")),
+    );
+    return;
+  }
+
   final alumnosDocs = await FirebaseFirestore.instance
       .collection("usuarios")
       .where(FieldPath.documentId, whereIn: alumnosIds)
       .get();
+
+  if (!context.mounted) return;
 
   showModalBottomSheet(
     context: context,
@@ -1382,6 +1983,7 @@ void _tomarAsistencia(BuildContext context, QueryDocumentSnapshot clase) async {
                       "estado": "hecha", // âœ… cambia estado
                       "asistenciaTomadaAt": Timestamp.now(),
                     });
+                    if (!context.mounted) return;
                     Navigator.pop(context);
                   },
                   child: const Text("Guardar asistencia"),
@@ -1492,8 +2094,9 @@ Future<void> _mostrarModalReprogramarClase(
                           context,
                           inicial: horaInicio,
                         );
-                        if (picked != null)
+                        if (picked != null) {
                           setModalState(() => horaInicio = picked);
+                        }
                       },
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
@@ -1541,8 +2144,9 @@ Future<void> _mostrarModalReprogramarClase(
                           context,
                           inicial: horaFin ?? horaInicio,
                         );
-                        if (picked != null)
+                        if (picked != null) {
                           setModalState(() => horaFin = picked);
+                        }
                       },
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
@@ -1599,8 +2203,9 @@ Future<void> _mostrarModalReprogramarClase(
                               firstDate: DateTime(2023),
                               lastDate: DateTime(2030),
                             );
-                            if (picked != null)
+                            if (picked != null) {
                               setModalState(() => fechaSeleccionada = picked);
+                            }
                           },
                           child: const Text("Cambiar"),
                         ),
@@ -1677,7 +2282,7 @@ Future<void> _mostrarModalReprogramarClase(
   );
 }
 
-Widget _infoFila(String titulo, String valor) {
+Widget _infoFila(BuildContext context, String titulo, String valor) {
   return Padding(
     padding: const EdgeInsets.only(bottom: 8),
     child: Row(
@@ -1687,13 +2292,15 @@ Widget _infoFila(String titulo, String valor) {
           width: 70,
           child: Text(
             "$titulo:",
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w600,
-              color: Colors.grey,
+              color: context.appMutedText,
             ),
           ),
         ),
-        Expanded(child: Text(valor)),
+        Expanded(
+          child: Text(valor, style: TextStyle(color: context.appText)),
+        ),
       ],
     ),
   );
@@ -1851,7 +2458,7 @@ class _HomeProfesorState extends State<HomeProfesor> {
       context: context,
       builder: (_) {
         return AlertDialog(
-          title: const Text("Elige duraciÃ³n"),
+          title: const Text("Elige la duración"),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: opciones.map((v) {
@@ -1956,8 +2563,9 @@ class _HomeProfesorState extends State<HomeProfesor> {
                             context,
                             inicial: horaInicio,
                           );
-                          if (picked != null)
+                          if (picked != null) {
                             setModalState(() => horaInicio = picked);
+                          }
                         },
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
@@ -2005,8 +2613,9 @@ class _HomeProfesorState extends State<HomeProfesor> {
                             context,
                             actual: duracion,
                           );
-                          if (picked != null)
+                          if (picked != null) {
                             setModalState(() => duracion = picked);
+                          }
                         },
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
@@ -2060,8 +2669,9 @@ class _HomeProfesorState extends State<HomeProfesor> {
                                 firstDate: DateTime(2023),
                                 lastDate: DateTime(2030),
                               );
-                              if (picked != null)
+                              if (picked != null) {
                                 setModalState(() => fechaSeleccionada = picked);
+                              }
                             },
                             child: const Text("Cambiar"),
                           ),
@@ -2350,7 +2960,7 @@ class _HomeProfesorState extends State<HomeProfesor> {
                                 "alumnosId": alumnosSeleccionados,
                                 "asistieron": [],
                                 "estado": "activa",
-                                "tipo": tipoClase,
+                                "tipoClase": tipoClase,
                                 "createdAt": Timestamp.now(),
                               });
 
@@ -2397,7 +3007,7 @@ class AppHeader extends StatelessWidget {
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.18),
+                    color: Colors.black.withValues(alpha: 0.18),
                     blurRadius: 14,
                     offset: const Offset(0, 6),
                   ),

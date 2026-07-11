@@ -1,8 +1,6 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:sbg_profesores/theme/app_colors.dart';
-import 'package:sbg_profesores/theme/app_theme.dart';
+import 'package:sbg_profesores/widgets/liquid_glass_panel.dart';
 
 Color _alpha(Color color, double value) => color.withValues(alpha: value);
 
@@ -48,9 +46,6 @@ class _LiquidGlassBottomNavState extends State<LiquidGlassBottomNav> {
     const barHeight = 78.0;
     const radius = BorderRadius.all(Radius.circular(32));
 
-    // Color negro un poco claro (puedes ajustar el valor según prefieras)
-    const barBackgroundColor = Color(0xFF1A1A1A); // Negro claro
-
     final actions = <_LiquidNavAction>[
       for (final destination in widget.destinations)
         _LiquidNavAction(
@@ -75,20 +70,20 @@ class _LiquidGlassBottomNavState extends State<LiquidGlassBottomNav> {
         height: barHeight,
         child: Align(
           alignment: Alignment.bottomCenter,
-          child: Container(
+          child: LiquidGlassPanel(
             width: expandedWidth,
             height: barHeight,
-            decoration: BoxDecoration(
-              borderRadius: radius,
-              color: barBackgroundColor,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
+            borderRadius: radius,
+            opacity: 0.78,
+            blurSigma: 22,
+            borderColor: Colors.white.withValues(alpha: 0.16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
             child: Stack(
               children: [
                 Material(
@@ -112,7 +107,6 @@ class _LiquidGlassBottomNavState extends State<LiquidGlassBottomNav> {
                     ),
                   ),
                 ),
-                // Indicador animado
                 _AnimatedIndicator(
                   selectedIndex: widget.currentIndex,
                   itemCount: actions.length,

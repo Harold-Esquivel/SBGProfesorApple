@@ -22,7 +22,8 @@ class ClaseCard extends StatelessWidget {
   });
 
   // --- Helpers ---
-  String _norm(String? v, String def) => (v ?? def).toString().trim().toLowerCase();
+  String _norm(String? v, String def) =>
+      (v ?? def).toString().trim().toLowerCase();
 
   Color _colorEstado(String e) {
     switch (e) {
@@ -37,7 +38,7 @@ class ClaseCard extends StatelessWidget {
     }
   }
 
-  Color _pastel(Color base) => base.withOpacity(0.12);
+  Color _pastel(Color base) => base.withValues(alpha: 0.12);
 
   IconData? _iconoEstado(String e) {
     switch (e) {
@@ -70,7 +71,10 @@ class ClaseCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: context.isDarkMode
-            ? Color.alphaBlend(colorBase.withOpacity(0.18), context.appCard)
+            ? Color.alphaBlend(
+                colorBase.withValues(alpha: 0.18),
+                context.appCard,
+              )
             : _pastel(colorBase),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: colorBase, width: 1.5),
@@ -86,7 +90,10 @@ class ClaseCard extends StatelessWidget {
             ),
             child: Text(
               hora,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
 
@@ -97,7 +104,13 @@ class ClaseCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(materia, style: const TextStyle(fontWeight: FontWeight.w700)),
+                Text(
+                  materia,
+                  style: TextStyle(
+                    color: context.appText,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(height: 2),
                 Text(profesor, style: TextStyle(color: context.appMutedText)),
               ],
@@ -116,7 +129,7 @@ class ClaseCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: colorBase.withOpacity(0.15),
+                    color: colorBase.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(iconEstado, size: 18, color: colorBase),
