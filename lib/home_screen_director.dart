@@ -3596,7 +3596,7 @@ class AppHeader extends StatelessWidget {
                 ],
               ),
               child: Image.asset(
-                "assets/images/logo.png",
+                "assets/images/logoapp.png",
                 height: 44, // ✅ logo grande
                 fit: BoxFit.contain,
               ),

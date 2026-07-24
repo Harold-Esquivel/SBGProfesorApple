@@ -10,6 +10,9 @@ import 'package:sbg_profesores/views/perfil_view.dart';
 import 'package:sbg_profesores/services/auth_navigation_service.dart';
 import 'package:sbg_profesores/widgets/liquid_glass_bottom_nav.dart';
 import 'package:sbg_profesores/widgets/liquid_glass_panel.dart';
+import 'package:sbg_profesores/utils/class_rules.dart';
+
+enum _ClassAction { edit, delete, attendance, cancel }
 
 bool _usuarioActivo(Map<String, dynamic> data) {
   final estado = (data["estado"] ?? "activo").toString().trim().toLowerCase();
@@ -17,18 +20,7 @@ bool _usuarioActivo(Map<String, dynamic> data) {
 }
 
 int _durToMin(String d) {
-  switch (d) {
-    case "45":
-      return 45;
-    case "60":
-      return 60;
-    case "90":
-      return 90;
-    case "120":
-      return 120;
-    default:
-      return 60;
-  }
+  return parseClassDurationMinutes(d);
 }
 
 TimeOfDay _addMinutes(TimeOfDay t, int minutes) {
@@ -69,11 +61,11 @@ Future<String?> _pickDuracion(
   BuildContext context, {
   required String actual,
 }) async {
-  const opciones = ["45", "60", "90", "120"];
+  const opciones = classDurationOptions;
 
   return showDialog<String>(
     context: context,
-    builder: (_) {
+    builder: (dialogContext) {
       return AlertDialog(
         title: const Text("Elige duraciÃ³n"),
         content: Column(
@@ -86,13 +78,13 @@ Future<String?> _pickDuracion(
                 selected ? Icons.check_circle : Icons.radio_button_unchecked,
                 color: selected ? kPrimary : Colors.grey,
               ),
-              onTap: () => Navigator.pop(context, v),
+              onTap: () => Navigator.pop(dialogContext, v),
             );
           }).toList(),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text("Cancelar"),
           ),
         ],
@@ -1222,21 +1214,21 @@ class HorarioView extends StatelessWidget {
 
   /// Opciones de clase
 
-  void _mostrarOpcionesClase(
+  Future<void> _mostrarOpcionesClase(
     BuildContext context,
     QueryDocumentSnapshot clase,
-  ) {
+  ) async {
     final data = clase.data() as Map<String, dynamic>;
 
     final materia = (data["materia"] ?? "Sin materia").toString();
     final horaInicio = (data["horaInicio"] ?? "--:--").toString();
     final horaFin = (data["horaFin"] ?? "--:--").toString();
-    final estado = (data["estado"] ?? "activa").toString();
+    final estado = normalizeClassStatus(data["estado"]);
 
     final tipo = (data["tipoClase"] ?? data["tipo"] ?? "presencial")
         .toString(); // presencial | virtual
-    final bool bloqueada = (estado == "hecha" || estado == "cancelada");
-    final bool editable = estado == "activa";
+    final bool editable = classCanBeModified(estado);
+    final alumnosIds = List<String>.from(data["alumnosId"] ?? const []);
 
     DateTime? fecha;
     final f = data["fecha"];
@@ -1246,13 +1238,13 @@ class HorarioView extends StatelessWidget {
         ? "Sin fecha"
         : "${fecha.day.toString().padLeft(2, "0")}/${fecha.month.toString().padLeft(2, "0")}/${fecha.year}";
 
-    showGeneralDialog(
+    final action = await showGeneralDialog<_ClassAction>(
       context: context,
       barrierDismissible: true,
       barrierLabel: "detalle_clase",
       barrierColor: Colors.black.withValues(alpha: 0.45),
       transitionDuration: const Duration(milliseconds: 220),
-      pageBuilder: (_, _, _) {
+      pageBuilder: (dialogContext, _, _) {
         return Center(
           child: Material(
             color: Colors.transparent,
@@ -1284,36 +1276,44 @@ class HorarioView extends StatelessWidget {
                   _infoFila(context, "Fecha", fechaTxt),
                   _infoFila(context, "Estado", estado),
                   _infoFila(context, "Tipo", tipo),
+                  _infoFila(
+                    context,
+                    "Alumnos",
+                    "${alumnosIds.length} seleccionado(s)",
+                  ),
 
                   const SizedBox(height: 18),
 
-                  if (!bloqueada) ...[
-                    if (editable) ...[
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          _mostrarModalEditarClase(context, clase);
-                        },
-                        icon: const Icon(Icons.edit_outlined),
-                        label: const Text("Editar clase"),
+                  if (editable) ...[
+                    OutlinedButton.icon(
+                      onPressed: () =>
+                          Navigator.pop(dialogContext, _ClassAction.edit),
+                      icon: const Icon(Icons.edit_outlined),
+                      label: const Text("Editar clase"),
+                    ),
+                    const SizedBox(height: 10),
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: const BorderSide(color: Colors.red),
                       ),
-                      const SizedBox(height: 10),
-                    ],
+                      onPressed: () =>
+                          Navigator.pop(dialogContext, _ClassAction.delete),
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text("Eliminar clase"),
+                    ),
+                    const SizedBox(height: 10),
                     botonPrimario(
                       texto: "Tomar asistencia",
                       icono: Icons.checklist,
-                      onTap: () {
-                        Navigator.pop(context);
-                        _tomarAsistencia(context, clase);
-                      },
+                      onTap: () =>
+                          Navigator.pop(dialogContext, _ClassAction.attendance),
                     ),
                     const SizedBox(height: 10),
 
                     OutlinedButton.icon(
-                      onPressed: () async {
-                        await clase.reference.update({"estado": "cancelada"});
-                        if (context.mounted) Navigator.pop(context);
-                      },
+                      onPressed: () =>
+                          Navigator.pop(dialogContext, _ClassAction.cancel),
                       icon: const Icon(Icons.cancel_outlined),
                       label: const Text("Cancelar clase"),
                     ),
@@ -1325,9 +1325,8 @@ class HorarioView extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        estado == "hecha"
-                            ? "Esta clase ya está marcada como hecha."
-                            : "Esta clase fue cancelada.",
+                        "Esta clase ya fue registrada como $estado. "
+                        "Su contenido es de solo lectura.",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: context.appText,
@@ -1335,30 +1334,6 @@ class HorarioView extends StatelessWidget {
                         ),
                       ),
                     ),
-                    // âœ… SOLO si fue cancelada: botÃ³n Reprogramar
-                    if (estado == "cancelada") ...[
-                      const SizedBox(height: 12),
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(
-                            255,
-                            255,
-                            190,
-                            92,
-                          ), // amarillo
-                          foregroundColor: Colors.black,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        icon: const Icon(Icons.schedule),
-                        label: const Text("Reprogramar"),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          _mostrarModalReprogramarClase(context, clase);
-                        },
-                      ),
-                    ],
                   ],
                 ],
               ),
@@ -1378,48 +1353,137 @@ class HorarioView extends StatelessWidget {
         );
       },
     );
+
+    if (!context.mounted || action == null) return;
+
+    switch (action) {
+      case _ClassAction.edit:
+        _mostrarModalEditarClase(context, clase);
+        return;
+      case _ClassAction.delete:
+        await _confirmarEliminarClase(context, clase);
+        return;
+      case _ClassAction.attendance:
+        await _tomarAsistencia(context, clase);
+        return;
+      case _ClassAction.cancel:
+        try {
+          await FirebaseFirestore.instance.runTransaction((transaction) async {
+            final actual = await transaction.get(clase.reference);
+            final actualData = actual.data() as Map<String, dynamic>?;
+            if (!actual.exists || !classCanBeModified(actualData?["estado"])) {
+              throw StateError("clase_bloqueada");
+            }
+            transaction.update(clase.reference, {
+              "estado": "cancelada",
+              "updatedAt": Timestamp.now(),
+            });
+          });
+        } catch (_) {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("La clase ya no se puede modificar.")),
+          );
+        }
+    }
   }
 
-  Future<void> _confirmarEliminarClase(
+  Future<bool> _confirmarEliminarClase(
     BuildContext context,
     QueryDocumentSnapshot clase,
   ) async {
+    final data = clase.data() as Map<String, dynamic>;
+    final nombreCurso = (data["materia"] ?? "Sin materia").toString().trim();
+    String nombreIngresado = "";
+
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text("Eliminar clase"),
-          content: const Text(
-            "¿Seguro que quieres eliminar esta clase? Esta acción no se puede deshacer.",
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text("No"),
-            ),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final nombreCorrecto = classDeletionNameMatches(
+              expectedName: nombreCurso,
+              enteredName: nombreIngresado,
+            );
+
+            return AlertDialog(
+              title: const Text("Eliminar clase"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Esta acción no se puede deshacer. Para confirmar, "
+                    "escribe exactamente el nombre del curso:",
+                  ),
+                  const SizedBox(height: 8),
+                  SelectableText(
+                    nombreCurso,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    autofocus: true,
+                    onChanged: (value) =>
+                        setDialogState(() => nombreIngresado = value),
+                    decoration: const InputDecoration(
+                      labelText: "Nombre del curso",
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
               ),
-              onPressed: () => Navigator.pop(dialogContext, true),
-              icon: const Icon(Icons.delete_outline),
-              label: const Text("Sí, eliminar"),
-            ),
-          ],
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: const Text("Cancelar"),
+                ),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: nombreCorrecto
+                      ? () => Navigator.pop(dialogContext, true)
+                      : null,
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text("Eliminar definitivamente"),
+                ),
+              ],
+            );
+          },
         );
       },
     );
 
-    if (confirmar != true) return;
+    if (confirmar != true) return false;
 
-    await clase.reference.delete();
+    try {
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final actual = await transaction.get(clase.reference);
+        final actualData = actual.data() as Map<String, dynamic>?;
+        if (!actual.exists || !classCanBeModified(actualData?["estado"])) {
+          throw StateError("clase_bloqueada");
+        }
+        transaction.delete(clase.reference);
+      });
+    } catch (_) {
+      if (!context.mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "No se eliminó: la clase ya fue registrada y es de solo lectura.",
+          ),
+        ),
+      );
+      return false;
+    }
 
-    if (!context.mounted) return;
-    Navigator.pop(context);
+    if (!context.mounted) return true;
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text("Clase eliminada")));
+    return true;
   }
 
   void _mostrarModalEditarClase(
@@ -1427,8 +1491,8 @@ class HorarioView extends StatelessWidget {
     QueryDocumentSnapshot clase,
   ) {
     final data = clase.data() as Map<String, dynamic>;
-    final estado = (data["estado"] ?? "activa").toString();
-    if (estado != "activa") return;
+    final estado = normalizeClassStatus(data["estado"]);
+    if (!classCanBeModified(estado)) return;
 
     final materiaController = TextEditingController(
       text: (data["materia"] ?? "").toString(),
@@ -1438,7 +1502,7 @@ class HorarioView extends StatelessWidget {
         const TimeOfDay(hour: 8, minute: 0);
     final duracionDb = data["duracionMin"];
     String duracion = duracionDb is int ? duracionDb.toString() : "60";
-    if (!["45", "60", "90", "120"].contains(duracion)) duracion = "60";
+    if (!classDurationOptions.contains(duracion)) duracion = "60";
 
     DateTime fechaSeleccionada = DateTime.now();
     final fechaDb = data["fecha"];
@@ -1703,7 +1767,6 @@ class HorarioView extends StatelessWidget {
                                 onSelected: (_) {
                                   setModalState(() {
                                     filtroGrupo = grupo;
-                                    alumnosSeleccionados.clear();
                                   });
                                 },
                               );
@@ -1877,16 +1940,44 @@ class HorarioView extends StatelessWidget {
                             return;
                           }
 
-                          await clase.reference.update({
-                            "materia": materia,
-                            "horaInicio": fmt24(horaInicio!),
-                            "horaFin": fmt24(horaFinCalc),
-                            "duracionMin": minutos,
-                            "fecha": Timestamp.fromDate(fechaSeleccionada),
-                            "alumnosId": alumnosSeleccionados,
-                            "tipoClase": tipoClase,
-                            "updatedAt": Timestamp.now(),
-                          });
+                          try {
+                            await FirebaseFirestore.instance.runTransaction((
+                              transaction,
+                            ) async {
+                              final actual = await transaction.get(
+                                clase.reference,
+                              );
+                              final actualData =
+                                  actual.data() as Map<String, dynamic>?;
+                              if (!actual.exists ||
+                                  !classCanBeModified(actualData?["estado"])) {
+                                throw StateError("clase_bloqueada");
+                              }
+                              transaction.update(clase.reference, {
+                                "materia": materia,
+                                "horaInicio": fmt24(horaInicio!),
+                                "horaFin": fmt24(horaFinCalc),
+                                "duracionMin": minutos,
+                                "fecha": Timestamp.fromDate(fechaSeleccionada),
+                                "alumnosId": List<String>.from(
+                                  alumnosSeleccionados,
+                                ),
+                                "tipoClase": tipoClase,
+                                "updatedAt": Timestamp.now(),
+                              });
+                            });
+                          } catch (_) {
+                            if (!context.mounted) return;
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  "No se guardó: la clase ya es de solo lectura.",
+                                ),
+                              ),
+                            );
+                            return;
+                          }
 
                           if (!context.mounted) return;
                           Navigator.pop(context);
@@ -1894,21 +1985,6 @@ class HorarioView extends StatelessWidget {
                             const SnackBar(content: Text("Clase actualizada")),
                           );
                         },
-                      ),
-                      const SizedBox(height: 10),
-                      OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.red,
-                          side: const BorderSide(color: Colors.red),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        onPressed: () =>
-                            _confirmarEliminarClase(dialogContext, clase),
-                        icon: const Icon(Icons.delete_outline),
-                        label: const Text("Eliminar clase"),
                       ),
                     ],
                   ),
@@ -1923,7 +1999,10 @@ class HorarioView extends StatelessWidget {
 }
 
 /// Tomar asistencia
-void _tomarAsistencia(BuildContext context, QueryDocumentSnapshot clase) async {
+Future<void> _tomarAsistencia(
+  BuildContext context,
+  QueryDocumentSnapshot clase,
+) async {
   final alumnosIds = List<String>.from(clase["alumnosId"]);
   final asistieron = <String>[];
 
@@ -1997,6 +2076,9 @@ void _tomarAsistencia(BuildContext context, QueryDocumentSnapshot clase) async {
   );
 }
 
+// Conservado para compatibilidad con datos antiguos; las clases registradas
+// ya no exponen esta acción en la interfaz.
+// ignore: unused_element
 Future<void> _mostrarModalReprogramarClase(
   BuildContext context,
   QueryDocumentSnapshot clase,
@@ -2427,18 +2509,7 @@ class _HomeProfesorState extends State<HomeProfesor> {
   }
 
   int _durToMin(String d) {
-    switch (d) {
-      case "45":
-        return 45;
-      case "60":
-        return 60;
-      case "90":
-        return 90;
-      case "120":
-        return 120;
-      default:
-        return 60;
-    }
+    return parseClassDurationMinutes(d);
   }
 
   TimeOfDay _addMinutes(TimeOfDay t, int minutes) {
@@ -2452,11 +2523,11 @@ class _HomeProfesorState extends State<HomeProfesor> {
     BuildContext context, {
     required String actual,
   }) async {
-    const opciones = ["45", "60", "90", "120"];
+    const opciones = classDurationOptions;
 
     return showDialog<String>(
       context: context,
-      builder: (_) {
+      builder: (dialogContext) {
         return AlertDialog(
           title: const Text("Elige la duración"),
           content: Column(
@@ -2469,13 +2540,13 @@ class _HomeProfesorState extends State<HomeProfesor> {
                   selected ? Icons.check_circle : Icons.radio_button_unchecked,
                   color: selected ? kPrimary : Colors.grey,
                 ),
-                onTap: () => Navigator.pop(context, v),
+                onTap: () => Navigator.pop(dialogContext, v),
               );
             }).toList(),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text("Cancelar"),
             ),
           ],
@@ -2489,7 +2560,7 @@ class _HomeProfesorState extends State<HomeProfesor> {
 
     final materiaController = TextEditingController();
     TimeOfDay? horaInicio;
-    String duracion = "60"; // 45|60|90|120
+    String duracion = "60";
 
     DateTime fechaSeleccionada = DateTime.now();
     final alumnosSeleccionados = <String>[];
@@ -2766,7 +2837,6 @@ class _HomeProfesorState extends State<HomeProfesor> {
                                 onSelected: (_) {
                                   setModalState(() {
                                     filtroGrupo = grupo;
-                                    alumnosSeleccionados.clear();
                                   });
                                 },
                               );
@@ -3014,7 +3084,7 @@ class AppHeader extends StatelessWidget {
                 ],
               ),
               child: Image.asset(
-                "assets/images/logo.png",
+                "assets/images/logoapp.png",
                 height: 44, // âœ… logo grande
                 fit: BoxFit.contain,
               ),
